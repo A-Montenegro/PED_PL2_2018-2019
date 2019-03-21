@@ -1,0 +1,655 @@
+package compiler.syntax;
+
+// Declaración de importaciones 
+//(No modificar las proporcionadas. Se pueden agregar mas)
+
+import java_cup.runtime.Symbol;
+import java.util.*;
+import javafx.util.Pair;
+
+import es.uned.lsi.compiler.lexical.*;
+import es.uned.lsi.compiler.code.*;
+import es.uned.lsi.compiler.intermediate.*;
+import es.uned.lsi.compiler.semantic.*;
+import es.uned.lsi.compiler.semantic.symbol.*;
+import es.uned.lsi.compiler.semantic.type.*;
+import es.uned.lsi.compiler.syntax.*;
+
+import compiler.CompilerContext;
+import compiler.lexical.*;
+import compiler.syntax.nonTerminal.*;
+import compiler.semantic.*;
+import compiler.semantic.symbol.*;
+import compiler.semantic.type.*;
+import compiler.intermediate.*;
+import compiler.code.*;
+
+
+
+// Declaración del código de usuario
+
+action code   {:
+	
+	SyntaxErrorManager   syntaxErrorManager   = CompilerContext.getSyntaxErrorManager();
+	SemanticErrorManager semanticErrorManager = CompilerContext.getSemanticErrorManager ();
+	ScopeManagerIF       scopeManager         = CompilerContext.getScopeManager ();
+	FinalCodeFactoryIF   finalCodeFactory     = CompilerContext.getFinalCodeFactory ();
+
+:}	
+
+parser code {:
+	SyntaxErrorManager syntaxErrorManager = CompilerContext.getSyntaxErrorManager();
+	
+	public void syntax_error(Symbol symbol)
+	{ 
+	    Token token = (Token) symbol.value;
+	    syntaxErrorManager.syntaxFatalError ("Error sintactico", token);	    
+	}
+		
+	public void unrecovered_syntax_error(java_cup.runtime.Symbol symbol)
+	{	
+	    Token token = (Token) symbol.value;
+	    syntaxErrorManager.syntaxFatalError ("Error fatal", token);
+	}
+:}
+
+
+// Declaración de terminales
+terminal Token TLTRUE, TLFALSE, TLINT, TLSTRING, TIDENTIFICADOR;
+terminal Token TAND, TNOT;
+terminal Token TBEGIN, TEND;
+terminal Token TIF, TTHEN, TELSE;
+terminal Token TMODULE, TPROCEDURE, TRETURN;
+terminal Token TDO, TWHILE;
+terminal Token TWRITESTRING, TWRITEINT, TWRITELN;
+terminal Token TBOOLEAN, TCONST, TINTEGER, TRECORD, TTYPE, TVAR;
+terminal Token TPTOCOMA, TPARI, TPARD, TCOMA, TDOSPTS, TIGUAL;
+terminal Token TSUMA, TDIVIDE, TASSIGN, TMENOR, TDISTINTO, TPUNTO;
+
+
+
+
+// Declaración de no terminales
+non terminal  					program;
+non terminal Axiom		axiom;
+
+
+
+non terminal       CtesLista	         			  ctes;
+non terminal       CtesLista	     			 ctesLista;
+non terminal       Cte 	          					   cte;
+non terminal       CteValor  	    			  cteValor;
+non terminal       TiposLista   	     			 tipos;
+non terminal       TiposLista     				tiposLista;
+non terminal       TypeRecord     	     			  tipo;
+non terminal       RegCampos     				  registro;
+non terminal       RegCampos     				 regCampos;
+non terminal       RegCampo      				  regCampo;
+non terminal       VarsLista       		   			  vars;
+non terminal       VarsLista     				 varsLista;
+non terminal       Var           	  				   var;
+non terminal       TypeIF       				   varTipo;
+non terminal       subs;
+non terminal       subDecl;
+non terminal       VarsLista      			     subParams;
+non terminal       VarsLista 		   	   subParamsCuerpo;
+non terminal       Var     							subPar;
+non terminal       TypeSimple  					 subReturn;
+non terminal       Stack<Sent>     				sentencias;
+non terminal       Sent          					  sent;
+non terminal       SentAsign    				 sentAsign;
+non terminal       SentES       					sentES;
+non terminal       SentReturn   				sentReturn;
+non terminal       SentCall     				  sentCall;
+non terminal       SentCallParams			sentCallParams;
+non terminal       SentIf      						sentIf;
+non terminal       Stack<Sent>    				  sentElse;
+non terminal       SentWhile   					 sentWhile;
+non terminal       Expresion     				 expresion;
+non terminal       TypeSimple			 	 tipoPrimitivo;
+non terminal       cuerpoModulo;
+non terminal       Pair<Stack<Sent>,Integer>   finalModulo;
+non terminal       VarSeqDeIds   		  	   varSeqDeIds;
+non terminal       Integer     					 ntPtoComa;
+
+
+// Declaración de relaciones de precedencia (de menos a más)
+precedence nonassoc TMENOR, TDISTINTO;
+precedence left     TSUMA;
+precedence left     TDIVIDE, TAND;
+precedence right    TNOT;
+precedence left     TPUNTO, TPARI, TPARD;
+
+
+// Declaración de reglas de producción
+// El proceso de análisis ha de empezar emitiendo el mensaje 'Starting parsing...' y
+// finalizar emitiendo el mensaje 'Parsing process finished' en el caso de no existir 
+// ningún error no recuperable.
+
+start with program;
+
+program ::= 
+  {: syntaxErrorManager.syntaxInfo ("Starting parsing..."); 
+	
+	
+  :}
+ 
+  axiom:ax
+  {: 
+  		// No modificar esta estructura, aunque se pueden añadir más acciones semánticas
+  		
+  		//List intermediateCode = ax.getIntermediateCode ();
+  		//finalCodeFactory.create (intermediateCode);
+
+  		// En caso de no comentarse las dos sentencias anteriores puede generar una excepcion
+  		// en las llamadas a cupTest si el compilador no está completo. Esto es debido a que 
+  		// aún no se tendrá implementada la generación de código intermedio ni final.
+  		// Para la entrega final deberán descomentarse y usarse.
+  		
+  		syntaxErrorManager.syntaxInfo ("Parsing process ended.");
+  :};
+
+axiom ::=
+        TMODULE TIDENTIFICADOR:id  ntPtoComa:pc {:
+        	String nombreAmbito= id.getLexema().toUpperCase();
+        	scopeManager.openScope(nombreAmbito);
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	operacionSemantica.inicializarTablaTipos();
+        	operacionSemantica.getErrorSemantico().lanzarInfoAmbitoGlobal(nombreAmbito, pc);
+        :}
+        cuerpoModulo 
+        | TMODULE error
+            
+    ;
+
+
+//
+// DEFINICIÓN DE CONSTANTES
+//
+ctes ::=
+        TCONST ctesLista:cLista {: RESULT= cLista; :}
+        
+        | /*nada*/          
+    ;
+
+ctesLista ::=
+        cte:c ctesLista:cLista {:
+        	cLista.addCte(c);
+			RESULT= cLista;
+        :}
+         
+        | cte:c {: RESULT= new CtesLista(c); :}   
+    ;
+
+cte ::=
+        TIDENTIFICADOR:id TIGUAL cteValor:cv ntPtoComa:pc {:
+				Cte cte=new Cte(id.getLexema(),cv);
+				OperacionSemantica operacionSemantica= new OperacionSemantica();
+				operacionSemantica.addSimboloTablaSimbolos(id.getLexema(), cv.getTipoValor(), 0, pc);
+				RESULT=cte;
+		   :}  
+		            
+		   | error	            
+    ;
+
+
+cteValor ::=
+        TLTRUE:t 	{: 
+        	TypeSimple tipo= new TypeSimple(scopeManager.getCurrentScope(), "LOGICO");
+        	RESULT=new CteValor(t.getLexema(), tipo); 
+        :}      
+        | TLFALSE:t {: 
+        	TypeSimple tipo= new TypeSimple(scopeManager.getCurrentScope(), "LOGICO");
+        	RESULT=new CteValor(t.getLexema(), tipo); 
+        :}             
+        | TLINT:t {: 
+        	TypeSimple tipo= new TypeSimple(scopeManager.getCurrentScope(), "ENTERO");
+        	RESULT=new CteValor(t.getLexema(), tipo); 
+        :}      
+    ;
+
+
+//
+// DEFINICIÓN DE TIPOS
+//
+tipos ::=
+        TTYPE tiposLista:tpLista {: RESULT= tpLista; :}
+        | /*nada*/
+	;
+ 
+tiposLista ::= tipo:tp tiposLista:tpLista {:
+		tpLista.addTipo(tp);
+		RESULT= tpLista;
+	:}            
+        | tipo:tp {: RESULT= new TiposLista(tp); :}
+	;
+
+tipo ::= TIDENTIFICADOR:id TIGUAL registro:rg ntPtoComa:pc {:
+			TypeRecord typeRecord= new TypeRecord(scopeManager.getCurrentScope(),id.getLexema(), rg);
+			OperacionSemantica operacionSemantica= new OperacionSemantica();
+			operacionSemantica.addTipoTablaTipos(typeRecord, pc);
+			RESULT= typeRecord;
+	:}
+        | error
+            
+    ;
+
+registro ::=
+        TRECORD regCampos:rc TEND {: RESULT=rc; :}
+        | error
+            
+    ;
+
+regCampos ::=
+        regCampo:rc regCampos:rcs {:
+            rcs.addRegCampo(rc);
+            RESULT= rcs;
+        :}
+        | regCampo:rc {: RESULT= new RegCampos(rc); :}
+    ;
+
+regCampo ::=
+        TIDENTIFICADOR:id TDOSPTS tipoPrimitivo:tp ntPtoComa:pc {: RESULT= new RegCampo(id.getLexema(), tp, pc); :}   
+        | error
+            
+    ;
+
+
+//
+// DEFINICIÓN DE VARIABLES
+//
+
+vars ::=
+        TVAR varsLista:vLista {: RESULT= vLista; :}   
+        | /*Nada*/          
+    ;
+
+varsLista ::=
+        var:v varsLista:vLista {:
+        	vLista.addVar(v);
+        	RESULT= vLista;
+        :}
+            
+        | var:v {: RESULT= new VarsLista(v); :}
+             
+    ;
+
+var ::=
+        varSeqDeIds:vsids TDOSPTS varTipo:vt ntPtoComa:pc{:
+			Var var=new Var(vsids, vt);
+			OperacionSemantica operacionSemantica= new OperacionSemantica();
+			operacionSemantica.addSecuenciaSimbolosTablaSimbolos(vsids,vt,1,pc);
+			RESULT=var;
+        :}
+            
+        | error
+            
+    ;
+
+varTipo ::=
+        tipoPrimitivo:tp {: RESULT= tp; :}
+        | TIDENTIFICADOR:id  {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeIF tipo= operacionSemantica.recuperarTipoDesdeTablaTipos(id.getLexema().toUpperCase(),id.getLine());
+        	RESULT= tipo;
+        :}
+    ;
+
+
+//
+// DEFINICIÓN DE SUBPROGRAMAS
+//
+
+subs ::=
+        subs TPROCEDURE subDecl cuerpoModulo
+            
+        | //Nada
+            
+    ;
+
+subDecl ::= TIDENTIFICADOR:id subParams:sP subReturn:sReturn ntPtoComa:pc {:
+			String nombre= id.getLexema().toUpperCase();
+			OperacionSemantica operacionSemantica= new OperacionSemantica();
+			if(sReturn==null){
+				TypeProcedure tipoProcedimiento= new TypeProcedure(scopeManager.getCurrentScope(), nombre, sP);
+				operacionSemantica.addTipoTablaTipos(tipoProcedimiento,pc);
+				operacionSemantica.addSimboloTablaSimbolos(nombre, tipoProcedimiento, 3, pc);
+			}else{
+				TypeFunction tipoFuncion= new TypeFunction(scopeManager.getCurrentScope(), nombre, sP, sReturn);
+				operacionSemantica.addTipoTablaTipos(tipoFuncion,pc);
+				operacionSemantica.addSimboloTablaSimbolos(nombre, tipoFuncion, 4, pc);
+			}	
+			scopeManager.openScope(nombre);
+			operacionSemantica= new OperacionSemantica();
+			operacionSemantica.getErrorSemantico().lanzarInfoNuevoAmbitoAbierto(nombre, pc);
+			operacionSemantica.inicializarTablaTipos();
+			operacionSemantica.addSecuenciaParametrosTablaSimbolos(sP,pc);
+        :}    
+            
+        | error
+            
+     ;
+
+subParams ::= 
+        TPARI TPARD {: RESULT= new VarsLista(); :}                          
+        | TPARI subParamsCuerpo:sPC TPARD  {: RESULT= sPC; :} 
+        | /*nada*/  {: RESULT= new VarsLista(); :}                          
+    ;
+
+subParamsCuerpo ::=
+        subPar:sP ntPtoComa subParamsCuerpo:sPC {:
+        	sPC.addVar(sP);
+        	RESULT= sPC;
+        :}
+         	   
+        | subPar:sP {: RESULT= new VarsLista(sP); :}       
+    ;
+
+subPar ::= 
+        TVAR varSeqDeIds:vsids TDOSPTS:tdospts varTipo:vTipo {: RESULT= new Var(vsids, vTipo); :}  
+        | error
+            
+    ;
+
+subReturn ::=
+        TDOSPTS tipoPrimitivo:tp {: RESULT= tp; :}
+            
+        | {: RESULT= null; :} //Nada
+            
+        | error
+            
+    ;
+
+
+
+//
+// DEFINICIÓN DE SENTENCIAS
+//
+
+sentencias ::= 
+        sent:sent ntPtoComa sentencias:sents {:
+        	sents.push(sent);
+        	RESULT= sents;
+        :}  
+        | /*Nada*/ {: RESULT= new Stack<Sent>(); :}
+            
+        | error
+            
+    ;
+
+sent ::= sentAsign:s {: RESULT=s; :}        
+        | sentES:s {: RESULT=s; :}
+        | sentReturn:s {: RESULT=s; :}
+        | sentIf:s {: RESULT=s; :}  TEND       
+        | sentWhile:s {: RESULT=s; :}  TEND    
+        | sentCall:s {: RESULT=s; :} 
+        | error
+            
+    ;
+
+sentAsign ::=
+        TIDENTIFICADOR:id TASSIGN:tassign expresion:exp {:
+        OperacionSemantica operacionSemantica= new OperacionSemantica();
+        SymbolIF simbolo= operacionSemantica.recuperarSimboloDesdeTablaSimbolos(id.getLexema().toUpperCase(), tassign.getLine());
+        TypeSimple tipoSimbolo= operacionSemantica.recuperarTipoSimplePorNombre(id.getLexema().toUpperCase(), tassign.getLine());
+        if(!(simbolo instanceof SymbolVariable))   operacionSemantica.getErrorSemantico().lanzarErrorPorSentenciaAsignacionAConstante(tassign.getLine());
+        if(!tipoSimbolo.compararNombre(exp.getTipoExpresion()))   operacionSemantica.getErrorSemantico().lanzarErrorPorSentenciaAsignacionIncorrecta(tassign.getLine());
+        RESULT = new SentAsign(id.getLexema().toUpperCase(), exp);
+        :}  
+          
+        | TIDENTIFICADOR:idTipoRegistro TPUNTO TIDENTIFICADOR:idRegCampo TASSIGN:tassign expresion:exp  {:
+        OperacionSemantica operacionSemantica= new OperacionSemantica();
+        TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idTipoRegistro.getLexema().toUpperCase(), tassign.getLine());
+		RegCampo regCampo=tipoRegistro.recuperarRegCampoPorNombre(idRegCampo.getLexema().toUpperCase());
+		if (regCampo==null) operacionSemantica.getErrorSemantico().lanzarErrorPorNoExistirRegCampo(tassign.getLine());
+		TypeSimple tipoRegCampo=regCampo.getTipoPrimitivoVariable();
+		TypeIF tipoExpresion= exp.getTipoExpresion();
+        if(!tipoRegCampo.compararNombre(tipoExpresion)){
+        	operacionSemantica.getErrorSemantico().lanzarErrorPorSentenciaAsignacionIncorrecta(tassign.getLine());
+        }
+        String nombreVariable= idTipoRegistro.getLexema().toUpperCase()+"."+idRegCampo.getLexema().toUpperCase();
+        RESULT = new SentAsign(nombreVariable, exp);
+        :}  
+            
+    ;
+
+sentWhile ::= TWHILE expresion:exp TDO:tdo sentencias:sents {:
+			 	TypeSimple tipo= exp.getTipoExpresion();
+			 	if(!tipo.getName().equals("LOGICO")) {
+			 		ErrorSemantico errorSemantico= new ErrorSemantico();
+			 		errorSemantico.lanzarErrorPorSentenciaWhileIncorrecta(tdo.getLine());
+			 	}
+			 	RESULT= new SentWhile(sents);
+		:}
+	;
+
+sentIf ::=  TIF expresion:exp TTHEN:tthen sentencias:sents sentElse:sentsElse {:
+		 	TypeSimple tipo= exp.getTipoExpresion();
+		 	if(!tipo.getName().equals("LOGICO")) {
+		 		ErrorSemantico errorSemantico= new ErrorSemantico();
+		 		errorSemantico.lanzarErrorPorSentenciaIfIncorrecta(tthen.getLine());
+		 	}
+		 	RESULT= new SentIf(sents,sentsElse);
+		:}
+	;
+
+sentElse ::=
+        TELSE sentencias:s {: RESULT= s; :}
+        | /*Nada*/ {: RESULT= new Stack<Sent>(); :}
+            
+    ;
+
+sentES ::=
+        TWRITESTRING TPARI TLSTRING:tlstring TPARD {: RESULT= new SentES("TWRITESTRING",tlstring.getLexema()); :}   
+        
+        | TWRITEINT TPARI expresion:exp TPARD:tpard {:
+		 	TypeSimple tipo= exp.getTipoExpresion();
+		 	if(!tipo.getName().equals("ENTERO")) {
+		 		ErrorSemantico errorSemantico= new ErrorSemantico();
+		 		errorSemantico.lanzarErrorPorSentenciaWriteIntIncorrecta(tpard.getLine());
+		 	}
+		 	RESULT= new SentES("TWRITEINT");
+		:}  
+		
+        | TWRITELN   {: RESULT= new SentES("WRITELN"); :}                         
+    ;
+
+sentReturn ::=
+        TRETURN:treturn expresion:exp {:
+        	TypeSimple tipoExpresion= exp.getTipoExpresion();
+        	OperacionSemantica operacionSemantica=new OperacionSemantica();
+        	operacionSemantica.validarSentenciaReturn(tipoExpresion, treturn.getLine());
+        	RESULT= new SentReturn(tipoExpresion);
+        :}
+            
+    ;
+
+sentCall ::=
+        TIDENTIFICADOR:idTipoProcedimiento TPARI sentCallParams:param TPARD:tpard {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeProcedure tipoProcedimiento= operacionSemantica.recuperarTipoProcedimientoPorNombre(idTipoProcedimiento.getLexema().toUpperCase(), tpard.getLine());
+        	if (tipoProcedimiento instanceof TypeFunction) operacionSemantica.getErrorSemantico().lanzarErrorPorNoSerTipoProcedimiento(tpard.getLine());
+        	tipoProcedimiento.comprobarCoincidenciaTiposParametros(param.getPilaTipos(), tpard.getLine());
+        	RESULT= new SentCall(tipoProcedimiento);
+        :}  
+        
+        | TIDENTIFICADOR:idTipoProcedimiento {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeProcedure tipoProcedimiento= operacionSemantica.recuperarTipoProcedimientoPorNombre(idTipoProcedimiento.getLexema().toUpperCase(), idTipoProcedimiento.getLine());
+        	if (tipoProcedimiento instanceof TypeFunction) operacionSemantica.getErrorSemantico().lanzarErrorPorNoSerTipoProcedimiento(idTipoProcedimiento.getLine());
+        	tipoProcedimiento.comprobarCoincidenciaTiposParametros(new Stack<TypeIF>(), idTipoProcedimiento.getLine());
+        	RESULT= new SentCall(tipoProcedimiento);
+        :}                             
+    ;
+
+sentCallParams ::= 
+        TIDENTIFICADOR:id {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	SymbolIF simbolo=operacionSemantica.recuperarSimboloDesdeTablaSimbolos(id.getLexema().toUpperCase(), id.getLine());
+        	TypeIF tipoSimbolo;
+        	TypeFunction tipoFuncion;
+        	if(simbolo instanceof SymbolFunction){
+        		tipoFuncion= (TypeFunction)simbolo.getType();
+        		tipoSimbolo= tipoFuncion.getTipoFuncion();
+        	}else{
+        		tipoSimbolo= simbolo.getType();
+        	}
+        	RESULT= new SentCallParams(tipoSimbolo);
+        :}
+            
+        | TIDENTIFICADOR:id TCOMA:tcoma sentCallParams:sCP {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	SymbolIF simbolo=operacionSemantica.recuperarSimboloDesdeTablaSimbolos(id.getLexema().toUpperCase(), id.getLine());
+        	TypeIF tipoSimbolo;
+        	TypeFunction tipoFuncion;
+        	if(simbolo instanceof SymbolFunction){
+        		tipoFuncion= (TypeFunction)simbolo.getType();
+        		tipoSimbolo= tipoFuncion.getTipoFuncion();
+        	}else{
+        		tipoSimbolo= simbolo.getType();
+        	}
+        	sCP.addTipo(tipoSimbolo);
+        	RESULT= sCP;
+        :}
+            
+        | TIDENTIFICADOR:idTipoRegistro TPUNTO:tpunto TIDENTIFICADOR:idRegCampo {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idTipoRegistro.getLexema().toUpperCase(), tpunto.getLine());
+			RegCampo regCampo=tipoRegistro.recuperarRegCampoPorNombre(idRegCampo.getLexema().toUpperCase());
+			if (regCampo==null) operacionSemantica.getErrorSemantico().lanzarErrorPorNoExistirRegCampo(tpunto.getLine());
+			TypeSimple tipoRegCampo=regCampo.getTipoPrimitivoVariable();
+			RESULT= new SentCallParams(tipoRegCampo);
+        :}
+            
+        | TIDENTIFICADOR:idTipoRegistro TPUNTO TIDENTIFICADOR:idRegCampo TCOMA:tcoma sentCallParams:sCP {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idTipoRegistro.getLexema().toUpperCase(), tcoma.getLine());
+			RegCampo regCampo=tipoRegistro.recuperarRegCampoPorNombre(idRegCampo.getLexema().toUpperCase());
+			if (regCampo==null) operacionSemantica.getErrorSemantico().lanzarErrorPorNoExistirRegCampo(tcoma.getLine());
+			TypeSimple tipoRegCampo=regCampo.getTipoPrimitivoVariable();
+			sCP.addTipo(tipoRegCampo);
+			RESULT= sCP;
+        :}
+            
+        | /*Nada*/ {: RESULT= new SentCallParams(); :}
+            
+        | error
+            
+    ;
+
+expresion ::=
+        TNOT:tnot expresion:exp {: RESULT= exp.operadorLogicoNOT(tnot.getLine()); :}  
+                          
+        | TPARI expresion:exp TPARD {: RESULT= exp; :} 
+                    
+        | expresion:exp1 TDIVIDE:tdivide expresion:exp2 {: 
+        	RESULT= exp1.operadorDividir(exp2, tdivide.getLine());
+        :}  
+        
+        | expresion:exp1 TSUMA:tsuma expresion:exp2 {: 
+        	RESULT= exp1.operadorSuma(exp2, tsuma.getLine());
+        :} 
+           
+        | expresion:exp1 TAND:tand expresion:exp2 {: 
+        	RESULT= exp1.operadorLogicoAND(exp2, tand.getLine());
+        :}   
+        
+        | expresion:exp1 TMENOR:tmenor expresion:exp2 {: 
+        	RESULT= exp1.operadorMenorQue(exp2, tmenor.getLine());
+        :}
+           
+        | expresion:exp1 TDISTINTO:tdistinto expresion:exp2 {: 
+        	RESULT= exp1.operadorDistintoQue(exp2, tdistinto.getLine());
+        :}
+        
+        | TLINT {: RESULT= new Expresion(new TypeSimple(scopeManager.getCurrentScope(), "ENTERO")); :}
+        
+        | TLTRUE {: RESULT= new Expresion(new TypeSimple(scopeManager.getCurrentScope(), "LOGICO")); :}
+        
+        | TLFALSE {: RESULT= new Expresion(new TypeSimple(scopeManager.getCurrentScope(), "LOGICO")); :}
+        
+        | TIDENTIFICADOR:id {: 
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	SymbolIF simbolo= operacionSemantica.recuperarSimboloDesdeTablaSimbolos(id.getLexema().toUpperCase(),id.getLine());
+        	TypeSimple tipoSimbolo;
+        	if(simbolo.getType() instanceof TypeFunction){
+        		TypeFunction tipoFuncion=(TypeFunction)simbolo.getType();
+        		tipoSimbolo=tipoFuncion.getTipoFuncion();
+        	}else{
+        		if (!(simbolo.getType() instanceof TypeSimple))  operacionSemantica.getErrorSemantico().lanzarErrorPorExpresionConTipoNoPermitido(id.getLine());
+        		tipoSimbolo= (TypeSimple)simbolo.getType();
+        	}	
+        	RESULT= new Expresion(tipoSimbolo);
+        :}
+        
+        | TIDENTIFICADOR:idTipoRegistro TPUNTO TIDENTIFICADOR:idRegCampo {: 
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idTipoRegistro.getLexema().toUpperCase(),idRegCampo.getLine());
+        	RegCampo regCampo= tipoRegistro.recuperarRegCampoPorNombre(idRegCampo.getLexema().toUpperCase());
+        	if (regCampo==null) operacionSemantica.getErrorSemantico().lanzarErrorPorNoExistirRegCampo(idTipoRegistro.getLine());
+        	TypeSimple tipoRegCampo= regCampo.getTipoPrimitivoVariable();
+        	RESULT= new Expresion(tipoRegCampo);
+        :}  
+                                                    
+        | TIDENTIFICADOR:idTipoFuncion TPARI sentCallParams:param TPARD:tpard {:
+        	OperacionSemantica operacionSemantica= new OperacionSemantica();
+        	TypeFunction tipoFuncion= operacionSemantica.recuperarTipoFuncionPorNombre(idTipoFuncion.getLexema().toUpperCase(), tpard.getLine());
+        	tipoFuncion.comprobarCoincidenciaTiposParametros(param.getPilaTipos(), tpard.getLine());
+        	RESULT= new Expresion(tipoFuncion.getTipoFuncion());
+        :}                                           
+        | error
+            
+    ;
+
+
+//
+// Reglas auxiliares
+//
+
+tipoPrimitivo ::=
+        TINTEGER {: RESULT = new TypeSimple(scopeManager.getCurrentScope(),"ENTERO"); :}   
+        | TBOOLEAN {: RESULT =new TypeSimple(scopeManager.getCurrentScope(),"LOGICO"); :}   
+            
+    ;
+
+varSeqDeIds ::=
+        TIDENTIFICADOR:ti {:
+        	VarSeqDeIds varSeqDeIds = new VarSeqDeIds();
+        	varSeqDeIds.addNombreVariable(ti.getLexema());
+        	RESULT=varSeqDeIds;
+        :}
+        | TIDENTIFICADOR:ti TCOMA varSeqDeIds:vsqids {:
+        	vsqids.addNombreVariable(ti.getLexema());
+        	RESULT=vsqids;
+        :}  
+    ;
+
+cuerpoModulo ::= 
+        ctes tipos vars subs TBEGIN finalModulo:fModulo{:
+        	String nombreAmbito= scopeManager.getCurrentScope().getName();
+        	if(scopeManager.getCurrentScope().getLevel()!=0){
+        		OperacionSemantica operacionSemantica= new OperacionSemantica();
+        		TypeProcedure tipoProcedimiento=operacionSemantica.recuperarTipoProcedimientoPorNombre(nombreAmbito, fModulo.getValue());
+        		if (tipoProcedimiento instanceof TypeFunction) {
+        			if (!OperacionSemantica.comprobarExisteReturn(fModulo.getKey())) operacionSemantica.getErrorSemantico().lanzarErrorPorNoExistirReturn(nombreAmbito);
+        		}
+        	}
+			scopeManager.closeScope ();
+			ErrorSemantico errorSemantico= new ErrorSemantico();
+			errorSemantico.lanzarInfoCierreAmbito(nombreAmbito,fModulo.getValue());
+		:}
+            
+        | error
+            
+    ;
+
+finalModulo ::= 
+        sentencias:s TEND TIDENTIFICADOR ntPtoComa:pc {: RESULT= new Pair<Stack<Sent>,Integer>(s,pc); :}
+        | error
+            
+    ;
+
+ntPtoComa ::= //Varios ';' seguidos deben ser interpretados como uno solo.        
+        TPTOCOMA:pc {: RESULT= pc.getLine(); :}
+        | TPTOCOMA:pc ntPtoComa  {: RESULT= pc.getLine(); :}
+    ;
