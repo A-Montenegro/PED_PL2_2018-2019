@@ -21,7 +21,11 @@ public class Cte extends NonTerminal {
 	public String getNombre() {
 		return nombre;
 	}
-
+	
+	public CteValor getCteValor() {
+		return cteValor;
+	}
+	
 	/**
 	* @return devuelve el valor
 	*/
