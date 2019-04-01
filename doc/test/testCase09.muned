@@ -73,7 +73,7 @@ MODULE nueve;
 	    Sumar(entero3, entero4);
 	    WRITESTRING("Suma:");
 	    WRITEINT(entero1);
-	    WHILE 1<1 do
+	    WHILE 1<>1 do
 	    	if(constante3) then
 	    		WRITEINT(entero4);
 	    	END;

@@ -6,19 +6,29 @@ import compiler.semantic.type.TypeSimple;
  * @author Alberto Martínez Montenegro
  */
 public class CteValor extends NonTerminal {
-	private String valor;
+	private int valor;
 	private TypeSimple tipoValor;
 	
 	public CteValor(String valor,TypeSimple tipoValor) {
 		super();
-		this.valor= valor;
+		switch(valor) {
+		case "TRUE":
+			this.valor= 1;
+		break;
+		case "FALSE":
+			this.valor= 0;
+		break;
+		default:
+			this.valor=Integer.parseInt(valor);
+		break;
+		}
 		this.tipoValor= tipoValor;
 	}
 
 	/**
 	* @return devuelve el valor
 	*/
-	public String getValor() {
+	public int getValor() {
 		return valor;
 	}
 	

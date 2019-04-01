@@ -1,5 +1,7 @@
 package compiler.intermediate;
 
+
+import compiler.semantic.symbol.SymbolVariable;
 import es.uned.lsi.compiler.intermediate.VariableIF;
 import es.uned.lsi.compiler.semantic.ScopeIF;
 
@@ -53,7 +55,8 @@ public class Variable
     public final int getAddress ()
     {
         // TODO : Student Work
-        return 0;
+    	SymbolVariable symbolVariable= (SymbolVariable) scope.getSymbolTable().getSymbol(name);
+        return symbolVariable.getAddress();
     }
 
     /**

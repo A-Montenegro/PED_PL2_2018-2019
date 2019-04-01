@@ -53,8 +53,13 @@ public class OperacionSemantica {
 	 */
 	public void inicializarTablaTipos() {
 		TypeTableIF tTable = scope.getTypeTable();
-		tTable.addType(new TypeSimple(scope,"ENTERO"));
-		tTable.addType(new TypeSimple(scope,"LOGICO"));
+		if(scope.getLevel()==0) {
+			tTable.addType(new TypeSimple(scope,"ENTERO"));
+			tTable.addType(new TypeSimple(scope,"LOGICO"));
+		}else{
+			tTable.addType(scopeManager.searchType("ENTERO"));	
+			tTable.addType(scopeManager.searchType("LOGICO"));	
+		}
 	}
 	
 	/***

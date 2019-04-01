@@ -29,7 +29,7 @@ public class Cte extends NonTerminal {
 	/**
 	* @return devuelve el valor
 	*/
-	public String getValor() {
+	public int getValor() {
 		return cteValor.getValor();
 	}
 

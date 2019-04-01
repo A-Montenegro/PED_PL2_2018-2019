@@ -11,20 +11,25 @@ import es.uned.lsi.compiler.semantic.type.TypeIF;
 // TODO: Student work
 //       Include properties to characterize parameters
 
-public class SymbolParameter
-    extends SymbolBase
+public class SymbolParameter extends SymbolBase
 {  
-   
+	private int address;
     /**
      * Constructor for SymbolParameter.
      * @param scope The declaration scope.
      * @param name The symbol name.
      * @param type The symbol type.
      */
-    public SymbolParameter (ScopeIF scope, 
-                           String name,
-                           TypeIF type)
+    public SymbolParameter (ScopeIF scope, String name, TypeIF type)
     {
         super (scope, name, type);
     } 
+    
+    public void setAddress(int address) {
+    	this.address= address;
+    }
+    
+    public int getAddress() {
+    	return address;
+    }
 }

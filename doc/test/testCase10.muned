@@ -1,0 +1,19 @@
+MODULE diez;
+CONST
+	B=7;
+TYPE TipoPersona = RECORD 
+    edad   : INTEGER; 
+    dni    : INTEGER; 
+    casado : BOOLEAN; 
+END; 
+VAR 
+	juan : TipoPersona;
+    a: INTEGER;    
+  	c:INTEGER;
+BEGIN
+	juan.edad:=5;
+	juan.dni:=20;
+	c:=juan.edad+b;
+	c:=c+68;
+	writeint((c+juan.dni)/4);
+END diez;

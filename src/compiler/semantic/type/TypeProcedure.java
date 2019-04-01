@@ -62,4 +62,11 @@ public class TypeProcedure extends TypeBase
 		return pilaSalida;
 	}
 	
+    @Override
+    public int getSize ()
+    {
+        // TODO: Student work
+        return 1;
+    }
+	
 }

@@ -51,9 +51,15 @@ public class TypeRecord
      * @return el tamaño del tipo.
      */
     @Override
-    public int getSize ()
+    public int getSize()
     {
-        return 1;
+        return registroCampos.getListaRegCampos().size();
     }
     
+    public int getPosicion(String nombreRegCampo)
+    {
+    	RegCampo regCampo= recuperarRegCampoPorNombre(nombreRegCampo);
+        //A continuación se resta el número total de resgistros al índice del elemento para obtener el índice real (ya que se inesertan en forma de pila)
+    	return registroCampos.getListaRegCampos().size()-registroCampos.getListaRegCampos().indexOf(regCampo)-1; 
+    }
 }

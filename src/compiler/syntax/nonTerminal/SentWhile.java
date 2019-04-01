@@ -1,16 +1,15 @@
 package compiler.syntax.nonTerminal;
 
-import java.util.Stack;
 
 public class SentWhile extends Sent {
-	private Stack<Sent> sentencias;
+	private Sentencias sentencias;
 	
-	public SentWhile(Stack<Sent> sentencias) {
+	public SentWhile(Sentencias sentencias) {
 		super();
 		this.sentencias=sentencias;
 	}
 	
-	public Stack<Sent> getSentencias(){
+	public Sentencias getSentencias(){
 		return sentencias;
 	}
 }

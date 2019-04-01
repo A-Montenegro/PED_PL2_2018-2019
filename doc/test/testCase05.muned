@@ -10,21 +10,21 @@
 MODULE cinco;
 
  TYPE TipoPersona = RECORD 
-                    edad   : INTEGER; 
-                    dni    : INTEGER; 
-                    casado : BOOLEAN; 
-                   END; 
+    edad   : INTEGER; 
+    dni    : INTEGER; 
+    casado : BOOLEAN; 
+END; 
 VAR juan : TipoPersona;
     a: INTEGER;
 BEGIN
-juan.edad := 23;
-juan.dni := 123;
-juan.casado := FALSE;
+	juan.edad := 23;
+	juan.dni := 123;
+	juan.casado := FALSE;
 	a := juan.edad;
-WRITESTRING("edad:");
-WRITEINT(juan.edad);
-WRITESTRING(" dni:");
-WRITEINT(juan.dni);
-WRITESTRING(" edad mas 1:");
-WRITEINT(juan.edad+1);
-  END cinco;
+	WRITESTRING("edad:");
+	WRITEINT(juan.edad);
+	WRITESTRING(" dni:");
+	WRITEINT(juan.dni);
+	WRITESTRING(" edad mas 1:");
+	WRITEINT(juan.edad+1);
+END cinco;

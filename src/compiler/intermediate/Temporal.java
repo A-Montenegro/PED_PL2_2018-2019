@@ -13,6 +13,7 @@ public class Temporal
     private String  name    = null;
     private ScopeIF scope   = null;
     private int     address = 0;
+    private int     size = 1;
            
     /**
      * Constructor for Temporal.
@@ -82,6 +83,19 @@ public class Temporal
         this.address = address;
     }
 
+    
+    
+    public final int getSize ()
+    {
+        return size;
+    }
+
+
+    public final void setSize (int size)
+    {
+        this.size = size;
+    }  
+    
     /**
      * Compares this object with another one.
      * @param other the other object.
