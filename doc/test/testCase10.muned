@@ -1,19 +1,18 @@
 MODULE diez;
 CONST
-	B=7;
+	Z=7;
 TYPE TipoPersona = RECORD 
     edad   : INTEGER; 
     dni    : INTEGER; 
     casado : BOOLEAN; 
 END; 
 VAR 
-	juan : TipoPersona;
-    a: INTEGER;    
-  	c:INTEGER;
+	a : boolean;
+    b: boolean;    
+  	c: boolean;
+  	d: integer;
 BEGIN
-	juan.edad:=5;
-	juan.dni:=20;
-	c:=juan.edad+b;
-	c:=c+68;
-	writeint((c+juan.dni)/4);
+	d:=  999/9;
+	WRITESTRING ("D= ");
+	WRITEINT(D);
 END diez;

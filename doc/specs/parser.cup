@@ -174,8 +174,7 @@ axiom ::=
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	cb.addQuadruples(cModulo.getCodigoIntermedioTotal());
-        	Axiom ax= new AxiomImpl();
-        	ax.setIntermediateCode (cb.create());
+        	Axiom ax= new AxiomImpl(cb.create());
     		scopeManager.closeScope();
 			ErrorSemantico errorSemantico= new ErrorSemantico();
 			errorSemantico.lanzarInfoCierreAmbito(nombre,numeroLinea);
@@ -549,9 +548,8 @@ sentES ::=
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	LabelFactory lF= new LabelFactory();
         	LabelIF l1= lF.create();
-        	TemporalFactory tf= new TemporalFactory(scope);
-        	TemporalIF temp= tf.create();
-        	cb.addQuadruple("PRINTC",temp, l1);
+        	cb.addQuadruple("PRINTC",l1);
+        	cb.addQuadruple("CADENA",tlstring.getLexema(), l1);
 			SentES sentES= new SentES("TWRITESTRING",tlstring.getLexema()); 
 			sentES.setIntermediateCode(cb.create());
         	RESULT= sentES; 
@@ -804,7 +802,7 @@ expresion ::=
 	    	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
 			TemporalIF temp1 = exp.getTemporal ();
 			TemporalIF temp = tf.create ();
-			cb.addQuadruples (exp.getCode ());
+			cb.addQuadruples (exp.getIntermediateCode());
 			cb.addQuadruple ("NOT", temp, temp1);
 	        Expresion expresion= exp.operadorLogicoNOT(tnot.getLine()); 
 	        expresion.setTemporal (temp);

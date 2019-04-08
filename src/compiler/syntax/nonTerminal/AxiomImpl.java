@@ -1,5 +1,6 @@
 package compiler.syntax.nonTerminal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import es.uned.lsi.compiler.intermediate.QuadrupleIF;
@@ -13,16 +14,29 @@ public class AxiomImpl extends Axiom {
     /**
      * Constructor de clase.
      */
-    public AxiomImpl ()
+    public AxiomImpl (List<QuadrupleIF> cuadruplas)
     {
-        super (); 
+       super();
+       code=new ArrayList<QuadrupleIF>();
+       List<QuadrupleIF> cuadruplas_cadena= new ArrayList<QuadrupleIF>();
+       for(QuadrupleIF cuadrupla: cuadruplas) {
+    	   if(cuadrupla.getOperation().equals("CADENA")) {
+    		   cuadruplas_cadena.add(cuadrupla);
+    	   }
+    	   else {
+    		   code.add(cuadrupla);
+    	   }
+       } 
+       for(QuadrupleIF cuadrupla: cuadruplas_cadena) {
+    	   code.add(cuadrupla);
+       }
     }
     
-	public List<QuadrupleIF> getCode(){
+	public List<QuadrupleIF> getIntermediateCode(){
 		return code;
 	}
 	
-	public void  setCode(List<QuadrupleIF> code){
+	public void  setIntermediateCode(List<QuadrupleIF> code){
 		this.code= code;
 	}
 	
