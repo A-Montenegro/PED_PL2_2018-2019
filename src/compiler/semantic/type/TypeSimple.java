@@ -8,12 +8,10 @@ import es.uned.lsi.compiler.semantic.type.TypeBase;
 import es.uned.lsi.compiler.semantic.type.TypeIF;
 
 /**
- * Class for TypeSimple.
+ * 
+ * Clase facilitada por el equipo docente, se ha modificado para adaptarla a la práctica.
+ * @author Alberto Martínez Montenegro
  */
-
-// TODO: Student work
-//       Include properties to characterize simple types
-
 public class TypeSimple
     extends TypeBase
 {
@@ -21,11 +19,11 @@ public class TypeSimple
      * Constructor for TypeSimple.
      * @param scope The declaration scope.
      */
-
     public TypeSimple (ScopeIF scope,String name)
     {
         super (scope, name.toUpperCase());
     }
+    
     /**
      * Método que compara el nombre de la instancia de esta clase con el nombre del tipo que se le pasa como parámetro.
      * @param tipo

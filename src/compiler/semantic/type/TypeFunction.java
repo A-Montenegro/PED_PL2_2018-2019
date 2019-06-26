@@ -16,6 +16,10 @@ public class TypeFunction extends TypeProcedure
         this.tipoFuncion= tipoFuncion;
     }
     
+    /**
+     * Método que devuelve el tipo devuelto por de la función.
+     * @return
+     */
     public TypeSimple getTipoFuncion() {
     	return tipoFuncion;
     }

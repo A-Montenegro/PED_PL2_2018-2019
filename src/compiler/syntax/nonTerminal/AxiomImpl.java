@@ -6,14 +6,19 @@ import java.util.List;
 import es.uned.lsi.compiler.intermediate.QuadrupleIF;
 import es.uned.lsi.compiler.intermediate.TemporalIF;
 
+/**
+ * Clase que implementa a la clase abstracta Axiom facilitada por el equipo docente.
+ * @author Alberto Martínez Montenegro.
+ */
 public class AxiomImpl extends Axiom {
 
 	private List<QuadrupleIF> code;
 	private TemporalIF temporal;
 	
-    /**
-     * Constructor de clase.
-     */
+	/**
+	 * Constructor de clase.
+	 * @param cuadruplas
+	 */
     public AxiomImpl (List<QuadrupleIF> cuadruplas)
     {
        super();

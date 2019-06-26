@@ -3,11 +3,16 @@ package compiler.syntax.nonTerminal;
 import java.util.Stack;
 
 /**
+ * Clase que representa a una serie de variables del mismo tipo.
  * @author Alberto Martínez Montenegro
  */
 public class VarSeqDeIds extends NonTerminal {
 	private Stack<String> nombresVariables;
 	
+	/**
+	 * 
+	 * Constructor de clase.
+	 */
 	public VarSeqDeIds() {
 		super();
 		this.nombresVariables=new Stack<String>();

@@ -1,9 +1,11 @@
 package compiler.intermediate;
 
 
+import compiler.semantic.symbol.SymbolParameter;
 import compiler.semantic.symbol.SymbolVariable;
 import es.uned.lsi.compiler.intermediate.VariableIF;
 import es.uned.lsi.compiler.semantic.ScopeIF;
+import es.uned.lsi.compiler.semantic.symbol.SymbolIF;
 
 /**
  * Class for variables in intermediate code.
@@ -55,8 +57,14 @@ public class Variable
     public final int getAddress ()
     {
         // TODO : Student Work
-    	SymbolVariable symbolVariable= (SymbolVariable) scope.getSymbolTable().getSymbol(name);
-        return symbolVariable.getAddress();
+    	SymbolIF simbolo= scope.getSymbolTable().getSymbol(name);
+    	if(simbolo instanceof SymbolVariable) {
+    		SymbolVariable symbolVariable= (SymbolVariable) scope.getSymbolTable().getSymbol(name);
+    		return symbolVariable.getAddress();
+    	}else{
+    		SymbolParameter symbolParameter= (SymbolParameter) scope.getSymbolTable().getSymbol(name);	
+    		return symbolParameter.getAddress();
+    	}  
     }
 
     /**

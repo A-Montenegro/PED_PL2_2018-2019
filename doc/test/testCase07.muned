@@ -5,12 +5,15 @@
 (*5*)
 
 MODULE siete;
+    
   VAR 	suma : INTEGER;
   		a1:INTEGER;
   		b1:INTEGER;
+  
   BEGIN
     a1:=2;
     b1:=3;
+    
 	IF a1<b1 THEN
 		suma:=a1+b1;
 	ELSE
@@ -18,5 +21,5 @@ MODULE siete;
 	END;    
     WRITESTRING("Suma (5):");
     WRITEINT(suma);
-    
-END siete;
+	    
+  END siete;

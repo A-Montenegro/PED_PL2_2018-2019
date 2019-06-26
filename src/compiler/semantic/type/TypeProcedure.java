@@ -2,9 +2,10 @@ package compiler.semantic.type;
 
 import java.util.Stack;
 
-import compiler.syntax.nonTerminal.ErrorSemantico;
+import compiler.semantic.ErrorSemantico;
 import compiler.syntax.nonTerminal.Var;
 import compiler.syntax.nonTerminal.VarsLista;
+import es.uned.lsi.compiler.intermediate.LabelIF;
 import es.uned.lsi.compiler.semantic.ScopeIF;
 import es.uned.lsi.compiler.semantic.type.TypeBase;
 import es.uned.lsi.compiler.semantic.type.TypeIF;
@@ -17,6 +18,7 @@ import es.uned.lsi.compiler.semantic.type.TypeIF;
 public class TypeProcedure extends TypeBase
 {   
 	private VarsLista parametros;
+	private LabelIF label;
 
     public TypeProcedure (ScopeIF scope, String name,VarsLista parametros)
     {
@@ -24,9 +26,30 @@ public class TypeProcedure extends TypeBase
         this.parametros= parametros;
     }
     
+    /**
+     * Método que devuelve la instancia de VarsLista que contiene los parámetros.
+     * @return
+     */
     public VarsLista getParametros() {
     	return parametros;
     }
+
+    /***
+     * Método que devuelve la etiqueta del procedimiento
+     * @return
+     */
+    public LabelIF getLabel() {
+    	return label;
+    }
+    
+    /**
+     * Método que establece la etiqueta del procedimiento.
+     * @param label
+     */
+    public void setLabel(LabelIF label) {
+    	this.label= label;
+    }
+    
     
     /***
      * Método que dada una pila de tipos que se le pasa como parámetro, comprueba que sean los mismos tipos que los parametros de esta instancia de 'TypeProcedure'
@@ -61,12 +84,4 @@ public class TypeProcedure extends TypeBase
 		}
 		return pilaSalida;
 	}
-	
-    @Override
-    public int getSize ()
-    {
-        // TODO: Student work
-        return 1;
-    }
-	
 }

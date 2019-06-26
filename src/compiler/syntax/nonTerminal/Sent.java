@@ -5,10 +5,19 @@ import java.util.List;
 import es.uned.lsi.compiler.intermediate.QuadrupleIF;
 import es.uned.lsi.compiler.intermediate.TemporalIF;
 
+/**
+ * 
+ * Clase diseñada para englobar a todos los tipos de sentencias.
+ * @author Alberto Martínez Montenegro
+ */
 public abstract class Sent extends NonTerminal {
 	private List<QuadrupleIF> code;
 	private TemporalIF temporal;
 	
+	/**
+	 * 
+	 * Constructor de clase.
+	 */
 	public Sent() {
 		super();
 	}

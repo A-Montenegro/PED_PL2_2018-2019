@@ -10,8 +10,7 @@ import es.uned.lsi.compiler.semantic.type.TypeIF;
 // TODO: Student work
 //       Include properties to characterize function calls
 
-public class SymbolFunction
-    extends SymbolProcedure
+public class SymbolFunction extends SymbolProcedure
 {
       
     /**
@@ -20,9 +19,7 @@ public class SymbolFunction
      * @param name The symbol name.
      * @param type The symbol type.
      */
-    public SymbolFunction (ScopeIF scope, 
-                           String name,
-                           TypeIF type)
+    public SymbolFunction (ScopeIF scope, String name, TypeIF type)
     {
         super (scope, name, type);
     } 

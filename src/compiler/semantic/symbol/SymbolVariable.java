@@ -28,11 +28,18 @@ public class SymbolVariable
         super (scope, name, type);
     } 
     
-    
+    /***
+     * Método que establece la dirección de memoria de la variable
+     * @param address
+     */
     public void setAddress(int address) {
     	this.address= address;
     }
     
+    /***
+     * Método que devuelve la dirección de memoria de la variable
+     * @return
+     */
     public int getAddress() {
     	return address;
     }

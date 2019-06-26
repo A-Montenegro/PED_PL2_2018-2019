@@ -3,6 +3,7 @@ package compiler.syntax.nonTerminal;
 import compiler.semantic.type.TypeSimple;
 
 /**
+ * Clase para la gestion de constantes.
  * @author Alberto Martínez Montenegro
  */
 public class Cte extends NonTerminal {

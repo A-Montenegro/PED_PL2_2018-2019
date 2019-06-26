@@ -3,12 +3,19 @@ package compiler.syntax.nonTerminal;
 import compiler.semantic.type.TypeSimple;
 
 /**
+ * Clase que almacena el valor de una constante
  * @author Alberto Martínez Montenegro
  */
 public class CteValor extends NonTerminal {
 	private int valor;
 	private TypeSimple tipoValor;
 	
+	/**
+	 * 
+	 * Constructor de clase.
+	 * @param valor
+	 * @param tipoValor
+	 */
 	public CteValor(String valor,TypeSimple tipoValor) {
 		super();
 		switch(valor) {
@@ -32,6 +39,10 @@ public class CteValor extends NonTerminal {
 		return valor;
 	}
 	
+	/**
+	 * Devuelve el tipo del valor.
+	 * @return
+	 */
 	public TypeSimple getTipoValor() {
 		return tipoValor;
 	}

@@ -1,18 +1,61 @@
-MODULE diez;
-CONST
-	Z=7;
-TYPE TipoPersona = RECORD 
-    edad   : INTEGER; 
-    dni    : INTEGER; 
-    casado : BOOLEAN; 
-END; 
-VAR 
-	a : boolean;
-    b: boolean;    
-  	c: boolean;
-  	d: integer;
-BEGIN
-	d:=  999/9;
-	WRITESTRING ("D= ");
-	WRITEINT(D);
-END diez;
+(* Se debe imprimir:
+El número de coordenadas coincidentes entre vector1 y vector2 es:
+2
+*)
+
+MODULE Vectores;
+
+  	TYPE VECTOR = RECORD 
+  		x: INTEGER; 
+		y: INTEGER;
+		z: INTEGER;
+	END; 
+
+  	VAR 	
+  		vector1, vector2: VECTOR;
+  		auxId1, auxId2, auxId3: INTEGER;
+  	
+  	PROCEDURE crearVector(VAR v1: VECTOR; VAR x,y,z: INTEGER);
+  		PROCEDURE escribir;
+  			var a,b,c: INTEGER;
+  		BEGIN
+  			a:=x;
+  			b:=y;
+  			c:=z;
+  			v1.x:= a;
+			v1.y:= b;
+			v1.z:= c;
+  		END escribir;
+  	BEGIN
+		escribir;
+  	END crearVector;
+  	PROCEDURE comparar(VAR v1,v2: VECTOR): INTEGER;
+  		var numeroCoincidencias: INTEGER;
+  		PROCEDURE esIgual(VAR a,b: INTEGER);
+  			BEGIN
+  				if (a<>b) then 
+  					numeroCoincidencias:= numeroCoincidencias + 0;
+  				ELSE 
+  					numeroCoincidencias:= numeroCoincidencias + 1;
+  				END;
+  		END esIgual;
+  	BEGIN
+  		numeroCoincidencias:=0;
+  		esIgual(v1.x,v2.x);
+  		esIgual(v1.y,v2.y);
+  		esIgual(v1.z,v2.z);
+  		RETURN numeroCoincidencias;
+  	END comparar;
+  BEGIN
+	auxId1:= 1;
+    auxId2:= 2;
+    auxId3:= 3;
+    crearVector(vector1,auxId1,auxId2,auxId3);
+	auxId1:= 4;
+    auxId2:= 2;
+    auxId3:= 3;
+    crearVector(vector2,auxId1,auxId2,auxId3);
+    WRITESTRING("El número de coordenadas coincidentes entre vector1 y vector2 es:");
+    WRITEINT(comparar(vector1,vector2));
+ 
+  END Vectores;

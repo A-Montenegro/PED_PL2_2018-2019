@@ -1,45 +1,52 @@
-package compiler.code;
+package compiler.code; 
 
-import java.util.Arrays;
-import java.util.List;
 
-import compiler.intermediate.Label;
-import compiler.intermediate.Temporal;
-import compiler.intermediate.Value;
-import compiler.intermediate.Variable;
-import compiler.semantic.type.TypeSimple;
-
-import es.uned.lsi.compiler.code.ExecutionEnvironmentIF;
-import es.uned.lsi.compiler.code.MemoryDescriptorIF;
-import es.uned.lsi.compiler.code.RegisterDescriptorIF;
-import es.uned.lsi.compiler.intermediate.LabelFactory;
-import es.uned.lsi.compiler.intermediate.LabelIF;
-import es.uned.lsi.compiler.intermediate.OperandIF;
-import es.uned.lsi.compiler.intermediate.QuadrupleIF;
+import java.util.Arrays; 
+import java.util.List; 
+import compiler.CompilerContext; 
+import compiler.intermediate.Label; 
+import compiler.intermediate.Temporal; 
+import compiler.intermediate.Value; 
+import compiler.intermediate.Variable; 
+import compiler.semantic.symbol.SymbolParameter; 
+import compiler.semantic.symbol.SymbolProcedure;
+import compiler.semantic.type.TypeProcedure;
+import compiler.semantic.type.TypeSimple; 
+import es.uned.lsi.compiler.code.ExecutionEnvironmentIF; 
+import es.uned.lsi.compiler.code.MemoryDescriptorIF; 
+import es.uned.lsi.compiler.code.RegisterDescriptorIF; 
+import es.uned.lsi.compiler.intermediate.LabelFactory; 
+import es.uned.lsi.compiler.intermediate.LabelIF; 
+import es.uned.lsi.compiler.intermediate.OperandIF; 
+import es.uned.lsi.compiler.intermediate.QuadrupleIF; 
+import es.uned.lsi.compiler.semantic.ScopeIF; 
+import es.uned.lsi.compiler.semantic.ScopeManagerIF; 
+import es.uned.lsi.compiler.semantic.symbol.SymbolIF; 
 
 /**
- * Class for the ENS2001 Execution environment.
+ * Clase facilitada por el equipo docente, sólo se ha modificado el método 'translate' y se han añadido tres métodos auxiliares.
+ * @author Alberto Martínez Montenegro.
  */
 
 public class ExecutionEnvironmentEns2001 
     implements ExecutionEnvironmentIF
 {    
-    private final static int      MAX_ADDRESS = 65535; 
+    private final static int      MAX_ADDRESS = 65535;  
     private final static String[] REGISTERS   = {
        ".PC", ".SP", ".SR", ".IX", ".IY", ".A", 
        ".R0", ".R1", ".R2", ".R3", ".R4", 
        ".R5", ".R6", ".R7", ".R8", ".R9"
-    };
+    }; 
     
-    private RegisterDescriptorIF registerDescriptor;
-    private MemoryDescriptorIF   memoryDescriptor;
+    private RegisterDescriptorIF registerDescriptor; 
+    private MemoryDescriptorIF   memoryDescriptor; 
     
     /**
      * Constructor for ENS2001Environment.
      */
     public ExecutionEnvironmentEns2001 ()
     {       
-        super ();
+        super (); 
     }
     
     /**
@@ -49,7 +56,7 @@ public class ExecutionEnvironmentEns2001
     @Override
     public final int getTypeSize (TypeSimple type)
     {      
-        return 1;  
+        return 1;   
     }
     
     /**
@@ -59,7 +66,7 @@ public class ExecutionEnvironmentEns2001
     @Override
     public final List<String> getRegisters ()
     {
-        return Arrays.asList (REGISTERS);
+        return Arrays.asList (REGISTERS); 
     }
     
     /**
@@ -69,7 +76,7 @@ public class ExecutionEnvironmentEns2001
     @Override
     public final int getMemorySize ()
     {
-        return MAX_ADDRESS;
+        return MAX_ADDRESS; 
     }
            
     /**
@@ -79,7 +86,7 @@ public class ExecutionEnvironmentEns2001
     @Override
     public final RegisterDescriptorIF getRegisterDescriptor ()
     {
-        return registerDescriptor;
+        return registerDescriptor; 
     }
 
     /**
@@ -89,467 +96,402 @@ public class ExecutionEnvironmentEns2001
     @Override
     public final MemoryDescriptorIF getMemoryDescriptor ()
     {
-        return memoryDescriptor;
+        return memoryDescriptor; 
     }
 
     /**
-     * Translate a quadruple into a set of final code instructions. 
-     * @param cuadruple The quadruple to be translated.
-     * @return a quadruple into a set of final code instructions. 
+     * Traducción de cuádruplas en código final. 
+     * @param cuadruple La cuádrupla a traducir.
+     * @return Conjunto de instrucciones en código final
      */
     @Override
     public final String translate (QuadrupleIF quadruple)
     {      
-        //TODO: Student work
+    	StringBuffer stringBuffer = new StringBuffer(); 
     	
-    	/*
-    	 * //resta dos operandos y guarda el valor en el registro acumulador que luego mueve al resultado.
-    	if(quadruple.getOperation().equals("OPERACION QUADRUPLA")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	String o2 = operacion(quadruple.getSecondOperand());
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("instruccion ENS2001 " + o1 + ", " + o2 + "\n");
-	    	b.append("instruccion ENS2001 " + ".A " + ", " + r);
-	    	return b.toString();
-    	}
+    	// Cada 'if' se corresponde con una operación diferente, se abarcan todas las operaciones posibles que pueden expresar las cuádruplas.
+    	// En los comentarios para ENS2001 introducidos con stringBuffer.append(";  xxxxxxxx "); puede encontrarse información detallada de las operaciones que se llevan a cabo.
 
-
-    	//Quadruple - [VARGLOBAL z, 67, null],
-    	// inicializa una variable con su valor en su dirección de memoria
-    	if(quadruple.getOperation().equals("VARGLOBAL")) {
-    		StringBuffer b = new StringBuffer();
-			String r = operacion(quadruple.getResult());
-    		String o1 = operacion(quadruple.getFirstOperand());
-    		b.append("MOVE " + o1 + ", " + r);
-    		return b.toString();
-    	}
-    	//MOVE #67, /1000
-    	
-    	
-    	//Quadruple - [DATA null, null, null],
-    	//Preparación del R.A. subprograma main
-    	if(quadruple.getOperation().equals("DATA")) {
-	    	StringBuffer b = new StringBuffer();
-	    	b.append("MOVE " + ".SP" + ", " + ".IX" + "\n");
-	    	b.append("PUSH " + "#-1" + "\n");
-	    	b.append("PUSH " + ".IY" + "\n");
-	    	b.append("PUSH " + ".SR");
-	    	return b.toString();
-    	}
-    	//MOVE .SP, .IX
-    	//PUSH #-1 // Introduce en la pila el valor de retorno
-    	//PUSH .IY // Introduce en la pila el enlace de control
-    	//PUSH .SR // Introduce en la pila el estado de la máquina
-    	
-    	
-    	//Quadruple - [DATAPUNTERO null, 8, null],
-    	//Posiciona el SP según el tamaño del R.A. del subprograma
-    	if(quadruple.getOperation().equals("DATAPUNTERO")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	b.append("SUB " + ".IX" + ", " + o1 + "\n");
-	    	b.append("MOVE " + ".A" + ", " + ".SP");
-	    	return b.toString();
-    	}
-    	//SUB .IX, #8
-    	//MOVE .A, .SP
-    	
-    	
-    	//Quadruple - [PRINTC T_0, L_2, null],
-    	//Imprimir una cadena y dar un salto de línea
-    	if(quadruple.getOperation().equals("PRINTC")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	b.append("WRSTR /" + o1 + "\n");
-	    	b.append("WRCHAR #10");
-	    	return b.toString();
-    	}
-    	//WRSTR /L_2
-    	//WRCHAR #10
-    	
-    	
-    	
-    	//Quadruple - [DATA_SUB null, null, null],
-    	//preparación del R.A. del subprograma,
-    	if(quadruple.getOperation().equals("DATA_SUB")) {
-	    	StringBuffer b = new StringBuffer();
-	    	b.append("MOVE " + ".SP" + ", " + ".R0" + "\n");
-	    	b.append("PUSH " + "#-1" + "\n");
-	    	b.append("PUSH " + ".IY" + "\n");
-	    	b.append("PUSH " + ".SR");
-	    	return b.toString();
-    	}
-    	//MOVE .SP, .R0
-    	//PUSH #-1 //Introduce en la pila el valor de retorno
-    	//PUSH .IY // Introduce en la pila el enlace de control
-    	//PUSH .SR // Introduce en la pila el estado de la máquina
-    	
-    	
-    	//Quadruple - [MVP T_1, z, null],
-    	//mueve el puntero de una variable a un temporal
-    	if(quadruple.getOperation().equals("MVP")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("MOVE " + o1 + ", " + r);
-	    	return b.toString();
-    	}
-    	//MOVE /1000, #-4[.IX]
-    	
-    	
-    	//Quadruple - [PARAM T_1, null, null],
-    	//Introduce un parámetro en la pila
-    	if(quadruple.getOperation().equals("PARAM")) {
-    		StringBuffer b = new StringBuffer();
-    		String r = operacion(quadruple.getResult());
-    		b.append("PUSH " + r);
-    		return b.toString();
-    		}
-    	//PUSH #-4[.IX]
-    	
-    	
-    	//Quadruple - [CALL L_decrementa, null, null],
-    	//Actualizamos los registro IX y IY e invocamos al subprograma,
-    	//restauramos el puntero de pila, el registro IX y IY, después de la instrucción RET
-    	if(quadruple.getOperation().equals("CALL")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("MOVE " + ".IX" + ", " + ".IY" + "\n");
-	    	b.append("MOVE " + ".R0" + ", " + ".IX" + "\n");
-	    	b.append("CALL /" + r + "\n");
-	    	b.append("MOVE " + ".IX" + ", " + ".SP" + "\n");
-	    	b.append("MOVE " + "#-1[.IX]" + ", " + ".R0" + "\n");
-	    	b.append("MOVE " + ".IY" + ", " + ".IX" + "\n");
-	    	b.append("MOVE " + ".R0" + ", " + ".IY");
-	    	return b.toString();
-    	}
-    	//MOVE .IX, .IY
-    	//MOVE .R0, .IX
-    	//CALL /L_decrementa // Introduce en la pila el contador del programa PC
-    	//MOVE .IX, .SP
-    	//MOVE #-1[.IX], .R0
-    	//MOVE .IY, .IX
-    	//MOVE .R0, .IY
-    	
-    	
-    	//Quadruple - [PRINTC T_2, L_4, null],
-    	//WRSTR /L_4
-    	//WRCHAR #10
-    	
-    	
-    	//Quadruple - [HALT null, null, null],
-    	//finalizamos la ejecución de programa principal
-    	if(quadruple.getOperation().equals("HALT")) {
-	    	StringBuffer b = new StringBuffer();
-	    	b.append("HALT");
-	    	return b.toString();
-    	}
-    	//HALT
-    	
-    	
-    	//Quadruple - [ETIQUETA L_decrementa, null, null],
-    	//Etiquetas usadas para saltos de comienzo de subprogarmas o sentencias
-    	//codicionales, bluces for.
-    	if(quadruple.getOperation().equals("ETIQUETA")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String r = operacion(quadruple.getResult());
-	    	b.append(r + " : NOP ");
-	    	return b.toString();
-    	}
-    	//L_decrementa : NOP
-    	
-    	
-    	//Quadruple - [VAR T_6, 0, null],
-    	//Introduce una variable en la pila dentro de su R.A.
-    	if(quadruple.getOperation().equals("VAR")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	b.append("PUSH " + o1);
-	    	return b.toString();
-    	}
-    	//PUSH #0
-    	
-    	//Quadruple - [DATAPUNTERO null, 13, null],
-    	//SUB .IX, #13
-    	//MOVE .A, .SP
-    	
-    	
-    	//Quadruple - [MVP T_0, x, null],
-    	//MOVE #-3[.IX], #-6[.IX]
-    	
-    	
-    	//Quadruple - [MV T_1, 1, null],
-    	//mueve el valor a un temporal
-    	if(quadruple.getOperation().equals("MV")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("MOVE " + o1 + ", " + r);
-	    	return b.toString();
-    	}
-    	//MOVE #1, #-7[.IX]
-    	
-    	
-    	//Quadruple - [SUB T_2, T_0, T_1],
-    	//Operación, resta dos operando y guarda el valor en el registro acumulador A
-    	//mueve el valor del registro acumulador A al resultado.
-    	if(quadruple.getOperation().equals("SUB")){
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	String o2 = operacion(quadruple.getSecondOperand());
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("SUB " + o1 + ", " + o2 + "\n");
-	    	b.append("MOVE " + ".A " + ", " + r);
-	    	return b.toString();
-    	}
-    	//SUB #-6[.IX], #-7[.IX]
-    	//MOVE .A , #-8[.IX]
-    	
-    	
-    	//Quadruple - [MVA T_3, y, null],
-    	//mueve el valor de la dirección de memoria de una variable a un temporal
-    	if(quadruple.getOperation().equals("MVA")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	String r = operacion(quadruple.getResult());
-	    	//b.append(o1);   ???????
-	    	b.append("MOVE " + ".A" + ", " + r);
-	    	return b.toString();
-    	}
-    	//SUB .IX, #5
-    	//MOVE .A, #-9[.IX]
-    	
-    	//Quadruple - [STP T_3, T_2, null],
-    	//Almacena el valor de un temporal en la dirección indicada por el otro temporal
-    	if(quadruple.getOperation().equals("STP")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("MOVE " + r + ", " + ".R1" + "\n");
-	    	b.append("MOVE " + o1 + ", " + "[.R1]");
-	    	return b.toString();
-    	}
-    	//MOVE #-9[.IX], .R1
-    	//MOVE #-8[.IX], [.R1]
-    	
-    	
-    	//Quadruple - [PRINTC T_4, L_0, null],
-    	//WRSTR /L_0
-    	//WRCHAR #10
-    	
-    	
-    	//Quadruple - [MVP T_5, y, null],
-    	//MOVE #-5[.IX], #-11[.IX]
-    	
-    	
-    	//Quadruple - [PRINTI T_5, null, null],
-    	//Imprime un ENTERO y da un salto de línea
-    	if(quadruple.getOperation().equals("PRINTI")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String r = operacion(quadruple.getResult());
-	    	b.append("WRINT " + r + "\n");
-	    	b.append("WRCHAR #10");
-	    	return b.toString();
-    	}
-    	//WRINT #-11[.IX]
-    	//WRCHAR #10
-    	
-    	
-    	//Quadruple - [FIN_SUB L_decrementa, 5, null],
-    	//posicionamos el puntero de la pila SP y ejecutamos la instrucción de retorno.
-    	if(quadruple.getOperation().equals("FIN_SUB")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	b.append("SUB " + ".IX" + ", " + o1 + "\n");
-	    	b.append("MOVE " + ".A" + ", " + ".SP" + "\n");
-	    	b.append("RET" + "\n");
-	    	return b.toString();
-    	}
-    	//SUB .IX, #5
-    	//MOVE .A, .SP
-    	//RET //extrae de la pila el contador de programa PC
-    	
-    	
-    	//Quadruple - [CADENA "y = ", L_0, null],
-    	
-    	
-    	//Quadruple - [CADENA "*** INVOCACION DE SUBPROGRAMAS***", L_2, null],
-    	
-    	
-    	//Quadruple - [CADENA "FIN", L_4, null]]
-    	//Etiqueta de cadena de carácteres
-    	if(quadruple.getOperation().equals("CADENA")) {
-	    	StringBuffer b = new StringBuffer();
-	    	String o1 = operacion(quadruple.getFirstOperand());
-	    	b.append(o1 + " : DATA " + quadruple.getResult() + " ");
-	    	return b.toString();
-    	}
-    	//L_0 : DATA "y = "
-    	//L_2 : DATA "*** INVOCACION DE SUBPROGRAMAS***"
-    	//L_4 : DATA "FIN"
-    	return "";
-
-    
-    */
-    	StringBuffer stringBuffer = new StringBuffer();
-    	stringBuffer.append("\n;"+quadruple+"\n");
-    	if(quadruple.getOperation().equals("ETIQUETA")) {
-	    	
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append(resultado + " : NOP ");
-	    	return stringBuffer.toString();
-    	}
-    	if(quadruple.getOperation().equals("DATA")) {
-	    	  // ATENCIÓN TODAVÍA POR HACER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	    	return stringBuffer.toString();
-    	}
-    	if(quadruple.getOperation().equals("HALT")) {
-	    	
-	    	stringBuffer.append("HALT");
-	    	return stringBuffer.toString();
-    	}	
-    	if(quadruple.getOperation().equals("PRINTI")) {
-    		
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("WRINT " + resultado + "\n");
-	    	stringBuffer.append("WRCHAR #10");
-	    	return stringBuffer.toString();
-    	}
-    	if(quadruple.getOperation().equals("MVA")) {
-	    	
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("MOVE " + operando1 + ", " + resultado);
-	    	return stringBuffer.toString();
-    	}
-    	if(quadruple.getOperation().equals("MVP")) {
-    		
-    		String operando1 = operacion(quadruple.getFirstOperand());
-    		String resultado = operacion(quadruple.getResult());
-    		stringBuffer.append("MOVE " + operando1 + ", " + ".R1" + "\n");
-    		stringBuffer.append("MOVE " + "[.R1]" + ", " + resultado);
+    	if(quadruple.getOperation().equals("INIT_SUB")) {
+    		stringBuffer.append("; ---------------------------------------\n"
+    						+ 	"; Práctica Procesadores del Lenguaje II\n"
+    						+ 	"; Curso 2018-2019\n"
+    						+ 	"; Autor: Alberto Martínez Montenegro\n"
+    						+ 	"; ---------------------------------------\n\n"
+    						+	"; " + quadruple+"\n"); 
+    		stringBuffer.append("; Las posiciones 2-" + (DireccionamientoMemoria.getSiguienteDireccionGlobal()-1) + " contendrán las variables globales.Por lo tanto, se hace un salto incondicional a la posición " 
+    							+ DireccionamientoMemoria.getSiguienteDireccionGlobal() + ", ya que ahí es donde comienza la zona de código:\n"); 
+    		stringBuffer.append("BR /" + DireccionamientoMemoria.getSiguienteDireccionGlobal() + "\nORG " + DireccionamientoMemoria.getSiguienteDireccionGlobal()+"\n"); 
+    		String nombreAmbitoGlobal = DireccionamientoMemoria.getNombreAmbitoGlobal(); 
+    		int memoriaUsadaProcedimientoPrincipal = DireccionamientoMemoria.getMemoriaProcedimiento(nombreAmbitoGlobal); 
+    		int offset = DireccionamientoMemoria.direccionInicioVectorDisplay - (memoriaUsadaProcedimientoPrincipal + 1); 
+    		stringBuffer.append("; Las direcciones del vector Display van desde la " + DireccionamientoMemoria.direccionInicioVectorDisplay + "(Display[0]), hasta la " 
+    							+ "65535(Display[" + (65535 - DireccionamientoMemoria.direccionInicioVectorDisplay) + "]).\n; Ya que la memoria usada por el programa principal es de " 
+    							+ memoriaUsadaProcedimientoPrincipal + ", se posiciona el puntero de pila en la dirección " + offset + ":\n"); 
+    		stringBuffer.append("MOVE " + "#" + offset + "," + " .SP" + "\n"); 
+    		stringBuffer.append("; Se establece el registro .IX con la dirección de inicio del vector Display para que los temporales se almacenen en las "
+    							+"direcciones superiores a partir de esa dirección:\n"); 				
+    		stringBuffer.append("MOVE " + "#" + DireccionamientoMemoria.direccionInicioVectorDisplay + "," + " .IX" + "\n");
+    		stringBuffer.append("; Se almacena en el Display[0] el enlace de acceso al programa principal:\n"); 
+    		stringBuffer.append("MOVE " + ".IX," + " [.IX]" + "\n"); 
     		return stringBuffer.toString();
+    	}else{
+    		stringBuffer.append("\n; "+quadruple+"\n"); 
+    	}
+
+    	if(quadruple.getOperation().equals("FIN_SUB")) {
+    		stringBuffer.append("; Fin del procedimiento actual, se retorna a procedimiento llamante mediante instrucción RET:\n") ;
+    		stringBuffer.append("RET\n"); 
+    		return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("RETURN")) {
+			stringBuffer.append("; Sentencia return de una función. El valor devuelto se encuentra en el temporal del operando resultado:\n");
+			String resultado = convertirAString(quadruple.getResult()); 
+			stringBuffer.append("MOVE .IX, .R1"+ "\n"); 
+			stringBuffer.append("INC .R1" + "\n"); 
+			stringBuffer.append("MOVE " + resultado + ", [.R1]"+ "\n"); 	
+			stringBuffer.append("RET"); 
+    		return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("RETF")) {
+    		stringBuffer.append("; Se establece el valor de retorno de una función en el campo de retorno del RA actual.\n");
+    		int numeroParametros= Integer.parseInt(quadruple.getFirstOperand().toString());
+    		Temporal resultado = (Temporal)quadruple.getResult(); 
+    		int desplazamiento = resultado.getAddress(); 
+    		stringBuffer.append("; Primero metemos en .R1 la dirección de memoria desplazada del operando resultado respecto de .IX:\n");
+    		stringBuffer.append("SUB .IX, #" + desplazamiento+ "\n"); 
+    		stringBuffer.append("MOVE .A, .R1"+ "\n"); 
+    		stringBuffer.append("; Después establecemos el valor de retorno en la dirección del temporal calculado en el paso anterior:\n");
+    		stringBuffer.append("SUB .SP, #"+ numeroParametros + "\n"); 
+    		stringBuffer.append("MOVE [.A], [.R1]"+ "\n"); 
+    		return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("HALT")) {
+    		stringBuffer.append("; Fin del programa, se interrumpe la ejecución.\n");
+	    	stringBuffer.append("HALT"); 
+	    	return stringBuffer.toString(); 
+    	}	
+    	
+    	if(quadruple.getOperation().equals("MV")) {  	
+    		stringBuffer.append("; Se guarda en el resultado el valor del primer operando.\n");
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("MOVE " + operando1 + ", " + resultado); 
+	    	return stringBuffer.toString(); 
+    	}
+ 
+    	if(quadruple.getOperation().equals("MVP")) {
+    		stringBuffer.append("; Se guarda en el temporal resultado el valor del contenido de la dirección de memoria especificada como primer operando.\n");
+    		String operando1 = convertirAString(quadruple.getFirstOperand()); 
+    		String resultado = convertirAString(quadruple.getResult()); 
+    		stringBuffer.append("MOVE " + operando1 + ", " + ".R1" + "\n"); 
+    		stringBuffer.append("MOVE " + "[.R1]" + ", " + resultado); 
+    		return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("MVA")) {
+    		int desplazamientoParaElementoDeRegistro = 0;  
+    		Temporal resultado = (Temporal)quadruple.getResult(); 
+    		Variable operando1 = (Variable)quadruple.getFirstOperand(); 
+    		if (quadruple.getSecondOperand()!=null) {
+    			desplazamientoParaElementoDeRegistro = Integer.parseInt(quadruple.getSecondOperand().toString()); 
     		}
+    		if(operando1.getScope().getLevel()==0)
+    		{
+    			stringBuffer.append("; Se hace referencia a una variable global, se usa direccionamiento directo:\n"); 
+    			stringBuffer.append("MOVE #" + (operando1.getAddress() + desplazamientoParaElementoDeRegistro) + ", #-" + resultado.getAddress() + "[.IX]" + "\n"); 
+    		}
+    		else if(esParametro(operando1.getName(),operando1.getScope()) )
+    		{		
+    			if(operando1.getScope().getLevel()==DireccionamientoMemoria.getNivelActual()) {
+    				stringBuffer.append("; Se hace referencia a un parámetro local, se usa un direccionamiento relativo al RA con desplazamiento de posición de registro:\n"); 
+    				stringBuffer.append("ADD "+ "#" + (operando1.getAddress() + 1)  + "[.IX]" + ", #" + desplazamientoParaElementoDeRegistro + "\n"); 
+    				stringBuffer.append("MOVE " + ".A" + ", " + "#-" +  + resultado.getAddress() + "[.IX]" +"\n"); 
+    			}else {
+    				int offset = DireccionamientoMemoria.direccionInicioVectorDisplay + operando1.getScope().getLevel(); 
+    				stringBuffer.append("; Se hace referencia a un parámetro NO local, se usa un direccionamiento relativo al RA indicado por el Display[" + operando1.getScope().getLevel() + "]:\n");			
+        			stringBuffer.append("MOVE #" + offset + ", .R1" + "\n");
+        			stringBuffer.append("ADD [.R1], #" + (operando1.getAddress() + 1 ) + "\n"); 
+        			stringBuffer.append("MOVE .A, .R1"+ "\n"); 
+        			stringBuffer.append("ADD [.R1], #" + desplazamientoParaElementoDeRegistro + "\n"); 
+        			stringBuffer.append("MOVE " + ".A" + ", " + "#-" +  + resultado.getAddress() + "[.IX]" +"\n");  
+    			}
+    		}
+    		else if(operando1.getScope().getLevel()!=DireccionamientoMemoria.getNivelActual())
+    		{
+    			int offset = DireccionamientoMemoria.direccionInicioVectorDisplay  + operando1.getScope().getLevel() ; 
+    			stringBuffer.append("; Se hace referencia a una variable NO local, se hace uso del Display[" + operando1.getScope().getLevel() + "] para encontrar la referencia dentro de su RA:\n"); 				
+    			stringBuffer.append("MOVE #" + offset + ", .R1" + "\n"); 
+    			stringBuffer.append("SUB [.R1], #" + (operando1.getAddress() - desplazamientoParaElementoDeRegistro) + "\n"); 
+    			stringBuffer.append("MOVE .A, #-" + resultado.getAddress() + "[.IX]"+ "\n");
+    		}		
+    		else
+    		{
+    			stringBuffer.append("; Variable local. Se almacena en el temporal su referencia relativa al RA actual:\n"); 
+    			stringBuffer.append("SUB .IX, #"+ (operando1.getAddress() - desplazamientoParaElementoDeRegistro)+"\n"); 
+    			stringBuffer.append("MOVE .A, #-" + resultado.getAddress() + "[.IX]" + "\n"); 
+    		}
+	    	return stringBuffer.toString(); 
+    	}
+    	
     	if(quadruple.getOperation().equals("STP")) {
-	    	
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("MOVE " + resultado + ", " + ".R1" + "\n");
-	    	stringBuffer.append("MOVE " + operando1 + ", " + "[.R1]");
-	    	return stringBuffer.toString();
+    		stringBuffer.append("; Se guarda en la dirección de memoria del temporal resultado el valor del temporal especificado como primer operando.\n");
+    		Temporal operando1 = (Temporal)quadruple.getFirstOperand(); 
+    		Temporal resultado = (Temporal)quadruple.getResult(); 
+    		stringBuffer.append("MOVE #-" + resultado.getAddress() + "[.IX]" + ", .R1" + "\n"); 
+    		stringBuffer.append("MOVE #-" + operando1.getAddress() + "[.IX], [.R1]" + "\n"); 
+	    	return stringBuffer.toString(); 
     	}
-    	if(quadruple.getOperation().equals("MV")) {
-	    	
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("MOVE " + operando1 + ", " + resultado);
-	    	return stringBuffer.toString();
-    	}
+	
     	if(quadruple.getOperation().equals("ADD")) {
-	    	
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String operando2 = operacion(quadruple.getSecondOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("ADD " + operando1 + ", " + operando2+ "\n");
-	    	stringBuffer.append("MOVE " + ".A " + ", " + resultado);
-	    	return stringBuffer.toString();
+    		stringBuffer.append("; Se suman los dos operandos y se guarda el resultado en el temporal del resultado.\n");
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String operando2 = convertirAString(quadruple.getSecondOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("ADD " + operando1 + ", " + operando2+ "\n"); 
+	    	stringBuffer.append("MOVE " + ".A " + ", " + resultado); 
+	    	return stringBuffer.toString(); 
     	}
+    	    	
     	if(quadruple.getOperation().equals("AND")) {
-	    	
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String operando2 = operacion(quadruple.getSecondOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("AND " + operando1 + ", " + operando2+ "\n");
-	    	stringBuffer.append("MOVE " + ".A " + ", " + resultado);
-	    	return stringBuffer.toString();
+    		stringBuffer.append("; Se hace la operación 'AND' sobre los dos operandos y se guarda el resultado en el temporal del resultado.\n");
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String operando2 = convertirAString(quadruple.getSecondOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("AND " + operando1 + ", " + operando2+ "\n"); 
+	    	stringBuffer.append("MOVE " + ".A " + ", " + resultado); 
+	    	return stringBuffer.toString(); 
     	}
+    	
     	if(quadruple.getOperation().equals("EQ")) {
-    		LabelFactory lF = new LabelFactory();
-    		LabelIF l1 = lF.create();
-			LabelIF l2 = lF.create();
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String operando2 = operacion(quadruple.getSecondOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("CMP " + operando1 + ", " + operando2+ "\n");
-	    	stringBuffer.append("BNZ /" + l2 + "\n");
-	    	stringBuffer.append("MOVE " + "#1 " + ", " + resultado + "\n");
-	    	stringBuffer.append("BR /" + l1 + "\n");
-	    	stringBuffer.append(l2 + ":\n");
-	    	stringBuffer.append("MOVE " + "#0 " + ", " + resultado + "\n");
-	    	stringBuffer.append(l1 + ":");
-	    	return stringBuffer.toString();
-    	}  
+    		stringBuffer.append("; Se hace la operación 'EQ' sobre los dos operandos y se guarda el resultado en el temporal del resultado.\n");
+    		LabelFactory lF = new LabelFactory(); 
+    		LabelIF l1 = lF.create(); 
+			LabelIF l2 = lF.create(); 
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String operando2 = convertirAString(quadruple.getSecondOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("CMP " + operando1 + ", " + operando2+ "\n"); 
+	    	stringBuffer.append("BNZ /" + l2 + "\n"); 
+	    	stringBuffer.append("MOVE " + "#1 " + ", " + resultado + "\n"); 
+	    	stringBuffer.append("BR /" + l1 + "\n"); 
+	    	stringBuffer.append(l2 + ":\n"); 
+	    	stringBuffer.append("MOVE " + "#0 " + ", " + resultado + "\n"); 
+	    	stringBuffer.append(l1 + ":"); 
+	    	return stringBuffer.toString(); 
+    	}	
+    	
     	if(quadruple.getOperation().equals("LS")) {
-    		LabelFactory lF = new LabelFactory();
-    		LabelIF l1 = lF.create();
-			LabelIF l2 = lF.create();
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String operando2 = operacion(quadruple.getSecondOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("CMP " + operando1 + ", " + operando2+ "\n");
-	    	stringBuffer.append("BN /" + l2 + "\n");
-	    	stringBuffer.append("MOVE " + "#0 " + ", " + resultado + "\n");
-	    	stringBuffer.append("BR /" + l1 + "\n");
-	    	stringBuffer.append(l2 + ":\n");
-	    	stringBuffer.append("MOVE " + "#1 " + ", " + resultado + "\n");
-	    	stringBuffer.append(l1 + ":");
-	    	return stringBuffer.toString();
-    	}  
+    		stringBuffer.append("; Se hace la operación 'LS' sobre los dos operandos y se guarda el resultado en el temporal del resultado.\n");
+    		LabelFactory lF = new LabelFactory(); 
+    		LabelIF l1 = lF.create(); 
+			LabelIF l2 = lF.create(); 
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String operando2 = convertirAString(quadruple.getSecondOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("CMP " + operando1 + ", " + operando2+ "\n"); 
+	    	stringBuffer.append("BN /" + l2 + "\n"); 
+	    	stringBuffer.append("MOVE " + "#0 " + ", " + resultado + "\n"); 
+	    	stringBuffer.append("BR /" + l1 + "\n"); 
+	    	stringBuffer.append(l2 + ":\n"); 
+	    	stringBuffer.append("MOVE " + "#1 " + ", " + resultado + "\n"); 
+	    	stringBuffer.append(l1 + ":"); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
     	if(quadruple.getOperation().equals("NOT")) {
-    		LabelFactory lF = new LabelFactory();
-    		LabelIF l1 = lF.create();
-			LabelIF l2 = lF.create();
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("CMP " + operando1 + ", " + "#1" + "\n");
-	    	stringBuffer.append("BZ /" + l2 + "\n");
-	    	stringBuffer.append("MOVE " + "#1 " + ", " + resultado + "\n");
-	    	stringBuffer.append("BR /" + l1 + "\n");
-	    	stringBuffer.append(l2 + ":\n");
-	    	stringBuffer.append("MOVE " + "#0 " + ", " + resultado + "\n");
-	    	stringBuffer.append(l1 + ":");
-	    	return stringBuffer.toString();
-    	}   
+    		stringBuffer.append("; Se hace la operación 'NOT' sobre el primer operando y se guarda el resultado en el temporal del resultado.\n");
+    		LabelFactory lF = new LabelFactory(); 
+    		LabelIF l1 = lF.create(); 
+			LabelIF l2 = lF.create(); 
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("CMP " + operando1 + ", " + "#1" + "\n"); 
+	    	stringBuffer.append("BZ /" + l2 + "\n"); 
+	    	stringBuffer.append("MOVE " + "#1 " + ", " + resultado + "\n"); 
+	    	stringBuffer.append("BR /" + l1 + "\n"); 
+	    	stringBuffer.append(l2 + ":\n"); 
+	    	stringBuffer.append("MOVE " + "#0 " + ", " + resultado + "\n"); 
+	    	stringBuffer.append(l1 + ":"); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
     	if(quadruple.getOperation().equals("DIV")) {
-	    	
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	String operando2 = operacion(quadruple.getSecondOperand());
-	    	String resultado = operacion(quadruple.getResult());
-	    	stringBuffer.append("DIV " + operando1 + ", " + operando2+ "\n");
-	    	stringBuffer.append("MOVE " + ".A " + ", " + resultado);
+    		stringBuffer.append("; Se hace la operación 'DIV' sobre los dos operandos y se guarda el resultado en el temporal del resultado.\n");
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String operando2 = convertirAString(quadruple.getSecondOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("DIV " + operando1 + ", " + operando2+ "\n"); 
+	    	stringBuffer.append("MOVE " + ".A " + ", " + resultado); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("BRF")) {
+    		stringBuffer.append("; Salto a la etiqueta del primer operando si el resultado es FALSE\n");
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("CMP " + resultado + ", " + "#1"+ "\n"); 
+	    	stringBuffer.append("BNZ /" + operando1); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("BR")) {
+    		stringBuffer.append("; Salto incondicional hacia la etiqueta del resultado.\n");
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("BR /" + resultado); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("INL")) {
+    		stringBuffer.append("; Se imprime la etiqueta del procedimiento:\n");
+	    	String resultado = convertirAString(quadruple.getResult()); 
+			if(quadruple.getFirstOperand() != null) //Si se especifica el primer operando, se está indicando que este mismo contiene el valor del nivel actual.
+			{
+				Value value = (Value)quadruple.getFirstOperand(); 
+				Integer valorNivel = (Integer)value.getValue(); 	
+				DireccionamientoMemoria.setNivelActual(valorNivel); 
+				stringBuffer.append(resultado + quadruple.getSecondOperand().toString() + ":\nNOP"); 
+			}
+			else {
+				stringBuffer.append(resultado + ":\nNOP"); 
+			}
+	    	return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("PARAM")) {
+    		stringBuffer.append("; Almacena el contenido del resultado en la dirección apuntada por el puntero de pila:\n");
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("PUSH " + resultado); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
+    	if(quadruple.getOperation().equals("CALL")) {
+    		stringBuffer.append("; Invocación de procedimiento, se siguen los pasos necesarios para preparar el RA." + "\n"); 
+    		String resultado = convertirAString(quadruple.getResult()); 
+    		ScopeManagerIF scopeManager= CompilerContext.getScopeManager (); 
+    		SymbolProcedure simboloProcedimiento = getProcedimientoPorEtiqueta(scopeManager, (LabelIF)quadruple.getResult()); 
+    		int nivelProcedimientoLlamado = simboloProcedimiento.getScope().getLevel() + 1; 
+    		int nivelProcedimientoLlamante = DireccionamientoMemoria.getNivelActual(); 
+			stringBuffer.append("; Paso 1- Se reserva espacio para el campo VALOR DE RETORNO:" + "\n"); 
+			stringBuffer.append("PUSH #0" + "\n"); 
+			stringBuffer.append("; Paso 2- Se almacena el puntero de marco del llamador en el campo FRAME POINTER:" + "\n"); 
+			stringBuffer.append("PUSH .IX" + "\n"); 
+			stringBuffer.append("; Paso 3-  Se actualiza el registro .IX con la dirección del nuevo RA:" + "\n"); 
+			stringBuffer.append("MOVE .SP, .IX" + "\n"); 
+			stringBuffer.append("; Paso 4- Se incrementa el valor de .IX en una unidad:" + "\n"); 
+			stringBuffer.append("INC .IX" + "\n"); 
+			stringBuffer.append("; Paso 5- Se actualiza el registro SP, posicionándolo en la zona superior a la zona ocupada por la memoria del nuevo procedimiento:" + "\n"); 
+			int offset= DireccionamientoMemoria.getMemoriaProcedimiento(quadruple.getFirstOperand().toString()); 
+			stringBuffer.append("SUB .SP, #" + offset + "\n"); 
+			stringBuffer.append("MOVE .A, .SP" + "\n"); 
+			stringBuffer.append("; Paso 6- Se actualiza el Display[" + nivelProcedimientoLlamado + "] dándole el valor del registro .IX:" + "\n"); 
+			offset = DireccionamientoMemoria.direccionInicioVectorDisplay +  nivelProcedimientoLlamado;
+			stringBuffer.append("MOVE .IX, /" + offset + "\n"); 
+			stringBuffer.append("; Registro de Activación creado. Se ejecuta la llamada al procedimiento:" + "\n"); 
+			stringBuffer.append("CALL /" + resultado + quadruple.getFirstOperand().toString() + "\n"); 
+			stringBuffer.append("; Fin de la invocación del procedimiento. En los dos últimos pasos se destruye el RA creado previamente:" + "\n"); 
+			stringBuffer.append("; Paso 7-  Se actualiza el Display[" + nivelProcedimientoLlamado + "] dándole el valor de la contenido de la dirección de memoria a la que apunta .IX:" + "\n"); 
+			stringBuffer.append("MOVE [.IX], /" + offset + "\n"); 
+			DireccionamientoMemoria.setNivelActual(nivelProcedimientoLlamante); 
+			stringBuffer.append("; Paso 8- Se actualiza el registro SP:" + "\n"); 
+			stringBuffer.append("MOVE .IX, .SP" + "\n"); 
+			offset = 1 + simboloProcedimiento.getSizeParametros(); 
+			stringBuffer.append("ADD .SP, #" + offset + "\n"); 
+			stringBuffer.append("MOVE .A, .SP" + "\n"); 
+			stringBuffer.append("; Paso 9- Se actaliza el registro IX con la dirección del RA del llamador:" + "\n"); 
+			stringBuffer.append("MOVE [.IX], .IX" + "\n");
 	    	return stringBuffer.toString();
     	}
+    	
+    	if(quadruple.getOperation().equals("PRINTI")) {
+    		stringBuffer.append("; Imprime un número entero y a continuación un salto de línea:\n");
+	    	String resultado = convertirAString(quadruple.getResult()); 
+	    	stringBuffer.append("WRINT " + resultado + "\n"); 
+	    	stringBuffer.append("WRCHAR #10"); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
     	if(quadruple.getOperation().equals("PRINTC")) {
-    		String operando1 = operacion(quadruple.getResult());
-    		stringBuffer.append("WRSTR /" + operando1 + "\n");
-    		stringBuffer.append("WRCHAR #10");
-	    	return stringBuffer.toString();
+    		stringBuffer.append("; Imprime una cadena de caracteres y a continuación un salto de línea:\n");
+    		String operando1 = convertirAString(quadruple.getResult()); 
+    		stringBuffer.append("WRSTR /" + operando1 + "\n"); 
+    		stringBuffer.append("WRCHAR #10"); 
+	    	return stringBuffer.toString(); 
     	}
+    	
+    	if(quadruple.getOperation().equals("PRINTLN")) {
+    		stringBuffer.append("; Imprime un salto de línea:\n");
+    		stringBuffer.append("WRCHAR #10"); 
+	    	return stringBuffer.toString(); 
+    	}
+    	
     	if(quadruple.getOperation().equals("CADENA")) {
-	    	String operando1 = operacion(quadruple.getFirstOperand());
-	    	stringBuffer.append(operando1 + " : DATA " + quadruple.getResult() + " ");
-	    	return stringBuffer.toString();
+    		stringBuffer.append("; Etiqueta para cadena de texto:\n");
+	    	String operando1 = convertirAString(quadruple.getFirstOperand()); 
+	    	stringBuffer.append(operando1 + " : DATA " + quadruple.getResult() + " "); 
+	    	return stringBuffer.toString(); 
     	}
-    	return quadruple.toString(); 	
+    	
+    	return "; "+quadruple.toString() + "\n; ERROR: CUÁDRUPLA DESCONOCIDA";  	
     }
-	public String operacion (OperandIF operando) {
+    
+    /***
+     * Método que devuelve una determinada String en función del tipo y del nivel del operando que se le pasa como parámetro.
+     * @param operando
+     * @return
+     */
+	public String convertirAString(OperandIF operando) {
 		if(operando instanceof Variable) {
-			Variable variable = (Variable)operando;
-			if(variable.getScope().getLevel()==0) return "#" + variable.getAddress();
-			else return "#-" + variable.getAddress() + "[.IX]";
+			Variable variable = (Variable)operando; 
+			if(variable.getScope().getLevel()==0) return "#" + variable.getAddress(); 
+			else return "#" + (variable.getAddress() + 1) + "[.IX]"; 
 		}
 		if(operando instanceof Value){
-			return "#" + ((Value)operando).getValue();
+			return "#" + ((Value)operando).getValue(); 
 		}
 		if(operando instanceof Temporal){
-			return "#-" + ((Temporal)operando).getAddress() + "[.IX]";
+			return "#-" + ((Temporal)operando).getAddress() + "[.IX]"; 
 		}
 		if(operando instanceof Label){
-			return ((Label)operando).getName();
+			return ((Label)operando).getName(); 
 		}
-		return operando.toString();
+		return ""; 
 	}
 	
+	/***
+	 * Método que devuelve TRUE si el nombre que se le pasa como parámetro es un parámetro del scope que también se le pasa como parámetro.
+	 * @param nombre
+	 * @param sc
+	 * @return
+	 */
+	public boolean esParametro(String nombre, ScopeIF sc) {
+		for (SymbolIF simbolo: sc.getSymbolTable().getSymbols()) {
+			if (simbolo instanceof SymbolParameter) if(nombre.equals(simbolo.getName())) return true; 
+		}
+		return false; 
+	}
+	
+	/***
+	 * Método que devuelve una instancia de la clase SymbolProcedure buscándola por nombre en todos los scopes.
+	 * @param scopeManager
+	 * @param nombreProcedimiento
+	 * @return
+	 */
+	public SymbolProcedure getProcedimientoPorEtiqueta(ScopeManagerIF scopeManager, LabelIF label) {
+			List<ScopeIF> scopes= scopeManager.getAllScopes(); 
+			for(ScopeIF scope: scopes) {
+				for(SymbolIF simboloProcecimiento: scope.getSymbolTable().getSymbols()) {
+					if(simboloProcecimiento instanceof SymbolProcedure) {
+						TypeProcedure tipoProcedimiento= (TypeProcedure) simboloProcecimiento.getType();
+						if (label == tipoProcedimiento.getLabel()) return (SymbolProcedure)simboloProcecimiento;
+					}
+				}
+			}
+			System.exit(0); 
+			return null; 
+	}
 	
 }

@@ -5,7 +5,6 @@ package compiler.syntax;
 
 import java_cup.runtime.Symbol;
 import java.util.*;
-
 import es.uned.lsi.compiler.lexical.*;
 import es.uned.lsi.compiler.code.*;
 import es.uned.lsi.compiler.intermediate.*;
@@ -13,7 +12,6 @@ import es.uned.lsi.compiler.semantic.*;
 import es.uned.lsi.compiler.semantic.symbol.*;
 import es.uned.lsi.compiler.semantic.type.*;
 import es.uned.lsi.compiler.syntax.*;
-
 import compiler.CompilerContext;
 import compiler.lexical.*;
 import compiler.syntax.nonTerminal.*;
@@ -22,8 +20,6 @@ import compiler.semantic.symbol.*;
 import compiler.semantic.type.*;
 import compiler.intermediate.*;
 import compiler.code.*;
-
-
 
 // DeclaraciÃ³n del cÃ³digo de usuario
 
@@ -86,7 +82,7 @@ non terminal       VarsLista       		   			  vars;
 non terminal       VarsLista     				 varsLista;
 non terminal       Var           	  				   var;
 non terminal       TypeIF       				   varTipo;
-non terminal       subDecl;
+non terminal       String						   subDecl;
 non terminal       VarsLista      			     subParams;
 non terminal       VarsLista 		   	   subParamsCuerpo;
 non terminal       Var     							subPar;
@@ -126,21 +122,11 @@ precedence left     TPUNTO, TPARI, TPARD;
 start with program;
 
 program ::= 
-  {: syntaxErrorManager.syntaxInfo ("Starting parsing..."); 
-	
-	
-  :}
+  {: syntaxErrorManager.syntaxInfo ("Starting parsing..."); :}
  
-  axiom:ax
+axiom:ax
   {: 
-  		
-		
-	
-		List<ScopeIF> scopes = scopeManager.getAllScopes();
-		Direccionamiento direccionamiento= new Direccionamiento(scopes, ax);
-		direccionamiento.direccionar();
-
-		
+		DireccionamientoMemoria.direccionar(scopeManager, ax);
 		// No modificar esta estructura, aunque se pueden aÃ±adir mÃ¡s acciones semÃ¡nticas
   		List intermediateCode = ax.getIntermediateCode();
   		System.out.println("\n[CÓDIGO INTERMEDIO]");
@@ -161,6 +147,7 @@ program ::=
 
 axiom ::=
         TMODULE TIDENTIFICADOR:id  ntPtoComa:pc   {:
+        	//Operaciones y comprobaciones semánticas:
         	String nombreAmbito= id.getLexema().toUpperCase();
         	scopeManager.openScope(nombreAmbito);
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
@@ -168,15 +155,18 @@ axiom ::=
         	operacionSemantica.getErrorSemantico().lanzarInfoAmbitoGlobal(nombreAmbito, pc);
 			
         :} cuerpoModulo:cModulo  {:
+        	//Operaciones y comprobaciones semánticas:
         	int numeroLinea= cModulo.getFinalModulo().getNumeroLinea();
+        	ErrorSemantico errorSemantico= new ErrorSemantico();
+        	if(!cModulo.getFinalModulo().getNombreModulo().equals(scopeManager.getScope(0).getName())) errorSemantico.lanzarErrorPorAmbitoCerradoConNombreIcorrecto(numeroLinea);
+        	
+        	//Código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	String nombre= scope.getName();
-        	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	cb.addQuadruples(cModulo.getCodigoIntermedioTotal());
         	Axiom ax= new AxiomImpl(cb.create());
     		scopeManager.closeScope();
-			ErrorSemantico errorSemantico= new ErrorSemantico();
 			errorSemantico.lanzarInfoCierreAmbito(nombre,numeroLinea);
 			RESULT= ax;
          :}
@@ -205,6 +195,7 @@ ctesLista ::=
 
 cte ::=
         TIDENTIFICADOR:id TIGUAL cteValor:cv ntPtoComa:pc {:
+        		//Operaciones y comprobaciones semánticas:
         		String nombre= id.getLexema().toUpperCase();
 				Cte cte=new Cte(nombre,cv);
 				OperacionSemantica operacionSemantica= new OperacionSemantica();
@@ -250,6 +241,7 @@ tiposLista ::= tipo:tp tiposLista:tpLista {:
 	;
 
 tipo ::= TIDENTIFICADOR:id TIGUAL registro:rg ntPtoComa:pc {:
+			//Operaciones y comprobaciones semánticas:
 			TypeRecord typeRecord= new TypeRecord(scopeManager.getCurrentScope(),id.getLexema(), rg);
 			OperacionSemantica operacionSemantica= new OperacionSemantica();
 			operacionSemantica.addTipoTablaTipos(typeRecord, pc);
@@ -301,6 +293,7 @@ varsLista ::=
 
 var ::=
         varSeqDeIds:vsids TDOSPTS varTipo:vt ntPtoComa:pc{:
+        	//Operaciones y comprobaciones semánticas:
 			Var var=new Var(vsids, vt);
 			OperacionSemantica operacionSemantica= new OperacionSemantica();
 			operacionSemantica.addSecuenciaSimbolosTablaSimbolos(vsids,vt,1,pc);
@@ -314,6 +307,7 @@ var ::=
 varTipo ::=
         tipoPrimitivo:tp {: RESULT= tp; :}
         | TIDENTIFICADOR:id  {:
+        	//Operaciones y comprobaciones semánticas:
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	TypeIF tipo= operacionSemantica.recuperarTipoDesdeTablaTipos(id.getLexema().toUpperCase(),id.getLine());
         	RESULT= tipo;
@@ -326,7 +320,11 @@ varTipo ::=
 //
 
 subs ::=
-        subs:subs TPROCEDURE subDecl cuerpoModulo:cM {:
+        subs:subs TPROCEDURE subDecl:sD cuerpoModulo:cM {:
+        	//Operaciones y comprobaciones semánticas:
+        	ErrorSemantico errorSemantico= new ErrorSemantico();
+        	int numeroLinea= cM.getFinalModulo().getNumeroLinea();
+        	if(!sD.equals(cM.getFinalModulo().getNombreModulo())) errorSemantico.lanzarErrorPorAmbitoCerradoConNombreIcorrecto(numeroLinea);
         	subs.addCuerpoModulo(cM);
 			RESULT= subs;
 		:}
@@ -336,22 +334,29 @@ subs ::=
     ;
 
 subDecl ::= TIDENTIFICADOR:id subParams:sP subReturn:sReturn ntPtoComa:pc {:
+			//Operaciones y comprobaciones semánticas:
 			String nombre= id.getLexema().toUpperCase();
+			LabelFactory lF = new LabelFactory();
+			LabelIF l1 = lF.create();
 			OperacionSemantica operacionSemantica= new OperacionSemantica();
+			if (operacionSemantica.existeProcedimientoEnAmbito(nombre)) operacionSemantica.getErrorSemantico().lanzarErrorPorProcedimientoDuplicado(pc);
 			if(sReturn==null){
 				TypeProcedure tipoProcedimiento= new TypeProcedure(scopeManager.getCurrentScope(), nombre, sP);
+				tipoProcedimiento.setLabel(l1);
 				operacionSemantica.addTipoTablaTipos(tipoProcedimiento,pc);
 				operacionSemantica.addSimboloTablaSimbolos(nombre, tipoProcedimiento, 3, pc);
 			}else{
 				TypeFunction tipoFuncion= new TypeFunction(scopeManager.getCurrentScope(), nombre, sP, sReturn);
+				tipoFuncion.setLabel(l1);
 				operacionSemantica.addTipoTablaTipos(tipoFuncion,pc);
 				operacionSemantica.addSimboloTablaSimbolos(nombre, tipoFuncion, 4, pc);
 			}	
 			scopeManager.openScope(nombre);
 			operacionSemantica= new OperacionSemantica();
 			operacionSemantica.getErrorSemantico().lanzarInfoNuevoAmbitoAbierto(nombre, pc);
-			operacionSemantica.inicializarTablaTipos();
 			operacionSemantica.addSecuenciaParametrosTablaSimbolos(sP,pc);
+			operacionSemantica.addSimbolosParametrosASimboloProcedimiento(sP);
+			RESULT= nombre;
         :}    
             
         | error
@@ -396,7 +401,10 @@ subReturn ::=
 
 sentencias ::= 
         sent:sent ntPtoComa sentencias:sents {:
+        	//Operaciones y comprobaciones semánticas:
         	sents.addSentencia(sent);
+        	
+        	//Código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	cb.addQuadruples(sent.getIntermediateCode());
@@ -422,12 +430,14 @@ sent ::= sentAsign:s {: RESULT=s; :}
 
 sentAsign ::=
         TIDENTIFICADOR:id TASSIGN:tassign expresion:exp {:
-        //Comprobaciones semánticas:
+        //Operaciones y comprobaciones semánticas:
         String idVariable= id.getLexema().toUpperCase();
         OperacionSemantica operacionSemantica= new OperacionSemantica();
         SymbolIF simbolo= operacionSemantica.recuperarSimboloDesdeTablaSimbolos(idVariable, tassign.getLine());
         TypeSimple tipoSimbolo= operacionSemantica.recuperarTipoSimplePorNombre(idVariable, tassign.getLine());
-        if(!(simbolo instanceof SymbolVariable))   operacionSemantica.getErrorSemantico().lanzarErrorPorSentenciaAsignacionAConstante(tassign.getLine());
+        if(!((simbolo instanceof SymbolVariable) || (simbolo instanceof SymbolParameter))){
+        	 operacionSemantica.getErrorSemantico().lanzarErrorPorSentenciaAsignacionAConstante(tassign.getLine());
+        }
         if(!tipoSimbolo.compararNombre(exp.getTipoExpresion()))   operacionSemantica.getErrorSemantico().lanzarErrorPorSentenciaAsignacionIncorrecta(tassign.getLine());
         
         //Código intermedio:
@@ -446,7 +456,7 @@ sentAsign ::=
         :}  
           
         | TIDENTIFICADOR:id TPUNTO TIDENTIFICADOR:idRegCampo TASSIGN:tassign expresion:exp  {:
-        //Comprobaciones semánticas:
+        //Operaciones y comprobaciones semánticas:
         String idVariableRegistro= id.getLexema().toUpperCase();
         OperacionSemantica operacionSemantica= new OperacionSemantica();
         TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idVariableRegistro, tassign.getLine());
@@ -464,17 +474,13 @@ sentAsign ::=
     	TemporalFactory tf= new TemporalFactory(scope);
     	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
     	TemporalIF temp1= tf.create();
-    	TemporalIF temp2= tf.create();
-    	TemporalIF temp3= tf.create();
     	TemporalIF eTemp= exp.getTemporal();
     	cb.addQuadruples(exp.getIntermediateCode());
     	int posicion= tipoRegistro.getPosicion(regCampo.getNombreVariable());
         SymbolIF simboloRegistro= scopeManager.searchSymbol(idVariableRegistro);
     	Variable var= new Variable(idVariableRegistro, simboloRegistro.getScope());
-        cb.addQuadruple("MVA", temp1, var);
-        cb.addQuadruple("MV", temp2, posicion);
-        cb.addQuadruple("ADD", temp3, temp1, temp2);
-    	cb.addQuadruple("STP", temp3, eTemp);
+        cb.addQuadruple("MVA", temp1, var, posicion);
+    	cb.addQuadruple("STP", temp1, eTemp);
     	SentAsign sentAsign= new SentAsign(nombreVariable, exp);
     	sentAsign.setIntermediateCode(cb.create());
     	RESULT= sentAsign;
@@ -483,7 +489,7 @@ sentAsign ::=
     ;
 
 sentWhile ::= TWHILE expresion:exp TDO:tdo sentencias:sents {:
-				//Comprobaciones semánticas:
+				//Operaciones y comprobaciones semánticas:
 			 	TypeSimple tipo= exp.getTipoExpresion();
 			 	if(!tipo.getName().equals("LOGICO")) {
 			 		ErrorSemantico errorSemantico= new ErrorSemantico();
@@ -501,6 +507,7 @@ sentWhile ::= TWHILE expresion:exp TDO:tdo sentencias:sents {:
 	    		cb.addQuadruples (exp.getIntermediateCode());
 	    		cb.addQuadruple("BRF", eTemp, l2);
 	    		cb.addQuadruples (sents.getIntermediateCode());
+	    		cb.addQuadruple("BR", l1);
 	    		cb.addQuadruple("INL", l2);
 	    		SentWhile sentWhile= new SentWhile(sents);
 	    		sentWhile.setIntermediateCode(cb.create());
@@ -509,7 +516,7 @@ sentWhile ::= TWHILE expresion:exp TDO:tdo sentencias:sents {:
 	;
 
 sentIf ::=  TIF expresion:exp TTHEN:tthen sentencias:sents sentElse:sentsElse {:
-			//Comprobaciones semánticas:
+			//Operaciones y comprobaciones semánticas:
 		 	TypeSimple tipo= exp.getTipoExpresion();
 		 	if(!tipo.getName().equals("LOGICO")) {
 		 		ErrorSemantico errorSemantico= new ErrorSemantico();
@@ -544,6 +551,7 @@ sentElse ::=
 
 sentES ::=
         TWRITESTRING TPARI TLSTRING:tlstring TPARD {: 
+        	//Código intermedio:
             ScopeIF scope= scopeManager.getCurrentScope();
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	LabelFactory lF= new LabelFactory();
@@ -556,6 +564,7 @@ sentES ::=
         :}   
         
         | TWRITEINT TPARI expresion:exp TPARD:tpard {:
+        	//Operaciones y comprobaciones semánticas:
 		 	TypeSimple tipo= exp.getTipoExpresion();
 		 	if(!tipo.getName().equals("ENTERO")) {
 		 		ErrorSemantico errorSemantico= new ErrorSemantico();
@@ -574,6 +583,7 @@ sentES ::=
 		:}  
 		
         | TWRITELN   {: 
+        	//Código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	cb.addQuadruple("PRINTLN");
@@ -585,7 +595,7 @@ sentES ::=
 
 sentReturn ::=
         TRETURN:treturn expresion:exp {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	TypeSimple tipoExpresion= exp.getTipoExpresion();
         	OperacionSemantica operacionSemantica=new OperacionSemantica();
         	operacionSemantica.validarSentenciaReturn(tipoExpresion, treturn.getLine());
@@ -595,7 +605,7 @@ sentReturn ::=
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
 			TemporalIF temp = exp.getTemporal();
 			cb.addQuadruples(exp.getIntermediateCode ());
-			cb.addQuadruple("RET", temp);
+			cb.addQuadruple("RETURN", temp);
 			SentReturn sentReturn= new SentReturn(tipoExpresion);
 			sentReturn.setIntermediateCode(cb.create());
 			RESULT = sentReturn;
@@ -605,7 +615,7 @@ sentReturn ::=
 
 sentCall ::=
         TIDENTIFICADOR:idTipoProcedimiento TPARI sentCallParams:param TPARD:tpard {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String nombreID= idTipoProcedimiento.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	TypeProcedure tipoProcedimiento= operacionSemantica.recuperarTipoProcedimientoPorNombre(nombreID, tpard.getLine());
@@ -614,19 +624,17 @@ sentCall ::=
         	
         	//Código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
-        	LabelFactoryIF lF= new LabelFactory();
-        	LabelIF l1=lF.create(nombreID);
+        	LabelIF l1=tipoProcedimiento.getLabel();
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
-        	cb.addQuadruple("DATA_SUB");
 			cb.addQuadruples(param.getIntermediateCode());
-        	cb.addQuadruple("CALL", l1);
+        	cb.addQuadruple("CALL", l1, nombreID);
         	SentCall sentCall= new SentCall(tipoProcedimiento); 
         	sentCall.setIntermediateCode(cb.create());
         	RESULT= sentCall;
         :}  
         
         | TIDENTIFICADOR:idTipoProcedimiento {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String nombreID= idTipoProcedimiento.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	TypeProcedure tipoProcedimiento= operacionSemantica.recuperarTipoProcedimientoPorNombre(nombreID, idTipoProcedimiento.getLine());
@@ -635,11 +643,9 @@ sentCall ::=
         	    	
         	//Código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
-        	LabelFactoryIF lF= new LabelFactory();
-        	LabelIF l1=lF.create(nombreID);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
-        	cb.addQuadruple("DATA_SUB");
-        	cb.addQuadruple("CALL", l1);
+        	LabelIF l1= tipoProcedimiento.getLabel();
+        	cb.addQuadruple("CALL", l1, nombreID);
         	SentCall sentCall= new SentCall(tipoProcedimiento); 
         	sentCall.setIntermediateCode(cb.create());
         	RESULT= sentCall;
@@ -648,7 +654,7 @@ sentCall ::=
 
 sentCallParams ::= 
         TIDENTIFICADOR:id {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String nombreID= id.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	SymbolIF simbolo=operacionSemantica.recuperarSimboloDesdeTablaSimbolos(nombreID, id.getLine());
@@ -667,19 +673,28 @@ sentCallParams ::=
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	TemporalIF temp= tf.create();	
         	if (simbolo instanceof SymbolConstant){
-        		int valor= ((SymbolConstant)simbolo).getValor();
-        		cb.addQuadruple("MV", temp, valor);
-        		cb.addQuadruple("PARAM", temp);
-        	}else if(simbolo instanceof SymbolVariable){
-        		Variable var= new Variable(nombreID,simbolo.getScope());
-        		cb.addQuadruple("MVA", temp, var);
-        		cb.addQuadruple("PARAM", temp);
+        		operacionSemantica.getErrorSemantico().lanzarErrorPorInvocacionConParametrosIncorrectos(id.getLine());
+        	}else if(simbolo instanceof SymbolVariable || simbolo instanceof SymbolParameter){
+        		if(simbolo.getType() instanceof TypeRecord){
+        			TemporalIF[] temps = new TemporalIF[simbolo.getType().getSize()];
+        			for(int i = 0; i < simbolo.getType().getSize(); i++){
+        				Variable var= new Variable(nombreID,simbolo.getScope());
+        				if(i==0){
+        					temps[i]=temp;
+        				}else{
+        					temps[i]= tf.create();
+        				}
+        				cb.addQuadruple("MVA", temps[i], var, i);
+        				cb.addQuadruple("PARAM", temps[i]);
+        			}
+        		}else{
+        			Variable var= new Variable(nombreID,simbolo.getScope());
+        			cb.addQuadruple("MVA", temp, var);
+        			cb.addQuadruple("PARAM", temp);
+        		}
         	}
         	else{
-	        	cb.addQuadruple("DATA_SUB");
-	        	LabelFactoryIF lF= new LabelFactory();
-	        	LabelIF l1=lF.create(nombreID);
-	        	cb.addQuadruple("CALL", l1);
+	        	operacionSemantica.getErrorSemantico().lanzarErrorPorInvocacionConParametrosIncorrectos(id.getLine());
         	}
         	SentCallParams sentCallParams= new SentCallParams(tipoSimbolo);
         	sentCallParams.setIntermediateCode(cb.create());
@@ -687,7 +702,7 @@ sentCallParams ::=
         :}
             
         | TIDENTIFICADOR:id TCOMA:tcoma sentCallParams:sCP {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String nombreID= id.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	SymbolIF simbolo=operacionSemantica.recuperarSimboloDesdeTablaSimbolos(nombreID, id.getLine());
@@ -707,20 +722,28 @@ sentCallParams ::=
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	TemporalIF temp= tf.create();	
         	if (simbolo instanceof SymbolConstant){
-        		int valor= ((SymbolConstant)simbolo).getValor();
-        		cb.addQuadruple("MV", temp, valor);
-        		cb.addQuadruple("PARAM", temp);
-        	}else if(simbolo instanceof SymbolVariable){
-        		Variable var= new Variable(nombreID,simbolo.getScope());
-        		cb.addQuadruple("MVA", temp, var);
-        		cb.addQuadruple("PARAM", temp);
+        		operacionSemantica.getErrorSemantico().lanzarErrorPorInvocacionConParametrosIncorrectos(id.getLine());
+        	}else if(simbolo instanceof SymbolVariable || simbolo instanceof SymbolParameter){
+        		if(simbolo.getType() instanceof TypeRecord){
+        			TemporalIF[] temps = new TemporalIF[simbolo.getType().getSize()];
+        			for(int i = 0; i < simbolo.getType().getSize(); i++){
+        				Variable var= new Variable(nombreID,simbolo.getScope());
+        				if(i==0){
+        					temps[i]=temp;
+        				}else{
+        					temps[i]= tf.create();
+        				}
+        				cb.addQuadruple("MVA", temps[i], var, i);
+        				cb.addQuadruple("PARAM", temps[i]);
+        			}
+        		}else{
+        			Variable var= new Variable(nombreID,simbolo.getScope());
+        			cb.addQuadruple("MVA", temp, var);
+        			cb.addQuadruple("PARAM", temp);
+        		}
         	}
         	else{
-	        	cb.addQuadruple("DATA_SUB");
-	        	LabelFactoryIF lF= new LabelFactory();
-	        	LabelIF l1=lF.create(nombreID);
-	        	cb.addQuadruple("CALL", l1);
-	        	//cb.addQuadruple("PARAM", temp); ????
+	        	operacionSemantica.getErrorSemantico().lanzarErrorPorInvocacionConParametrosIncorrectos(id.getLine());
         	}
         	cb.addQuadruples(sCP.getIntermediateCode());
         	sCP.setIntermediateCode(cb.create());
@@ -728,7 +751,7 @@ sentCallParams ::=
         :}
             
         | TIDENTIFICADOR:id TPUNTO:tpunto TIDENTIFICADOR:idRegCampo {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String idTipoRegistro= id.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idTipoRegistro, tpunto.getLine());
@@ -742,16 +765,10 @@ sentCallParams ::=
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	TemporalIF temp= tf.create();
-        	TemporalIF temp1= tf.create();
-        	TemporalIF temp2= tf.create();
-        	TemporalIF temp3= tf.create();
         	int posicion= tipoRegistro.getPosicion(regCampo.getNombreVariable());
         	SymbolIF sV= scopeManager.searchSymbol(idTipoRegistro);
         	Variable var= new Variable(idTipoRegistro, sV.getScope());
-        	cb.addQuadruple("MVA", temp1, var);
-        	cb.addQuadruple("MV", temp2, posicion);
-        	cb.addQuadruple("ADD", temp3, temp1, temp2);
-        	cb.addQuadruple("MVP", temp, temp3);
+        	cb.addQuadruple("MVA", temp, var, posicion);
         	cb.addQuadruple("PARAM", temp);
         	SentCallParams sentCallParams= new SentCallParams(tipoRegCampo);
         	sentCallParams.setIntermediateCode(cb.create());
@@ -759,7 +776,7 @@ sentCallParams ::=
         :}
             
         | TIDENTIFICADOR:id TPUNTO TIDENTIFICADOR:idRegCampo TCOMA:tcoma sentCallParams:sCP {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String idTipoRegistro= id.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	TypeRecord tipoRegistro= operacionSemantica.recuperarTipoRegistroPorNombreDelSimbolo(idTipoRegistro, tcoma.getLine());
@@ -773,17 +790,11 @@ sentCallParams ::=
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	TemporalIF temp= tf.create();
-        	TemporalIF temp1= tf.create();
-        	TemporalIF temp2= tf.create();
-        	TemporalIF temp3= tf.create();
         	int posicion= tipoRegistro.getPosicion(regCampo.getNombreVariable());
         	SymbolIF sV= scopeManager.searchSymbol(idTipoRegistro);
         	Variable var= new Variable(idTipoRegistro, sV.getScope());
         	cb.addQuadruples(sCP.getIntermediateCode());
-        	cb.addQuadruple("MVA", temp1, var);
-        	cb.addQuadruple("MV", temp2, posicion);
-        	cb.addQuadruple("ADD", temp3, temp1, temp2);
-        	cb.addQuadruple("MVP", temp, temp3);
+        	cb.addQuadruple("MVA", temp, var, posicion);
         	cb.addQuadruple("PARAM", temp);
         	sCP.setIntermediateCode(cb.create());
 			RESULT= sCP;
@@ -797,6 +808,7 @@ sentCallParams ::=
 
 expresion ::=
         TNOT:tnot expresion:exp {: 
+        	//Comprobaciones semánticas y código intermedio:
 	        ScopeIF scope= scopeManager.getCurrentScope();
 	    	TemporalFactory tf= new TemporalFactory(scope);
 	    	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -813,6 +825,7 @@ expresion ::=
         | TPARI expresion:exp TPARD {: RESULT= exp; :} 
                     
         | expresion:exp1 TDIVIDE:tdivide expresion:exp2 {: 
+        	//Comprobaciones semánticas y código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -829,6 +842,7 @@ expresion ::=
         :}  
         
         | expresion:exp1 TSUMA:tsuma expresion:exp2 {: 
+        	//Comprobaciones semánticas y código intermedio:
             ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -845,6 +859,7 @@ expresion ::=
         :} 
            
         | expresion:exp1 TAND:tand expresion:exp2 {: 
+        	//Comprobaciones semánticas y código intermedio:
             ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -861,6 +876,7 @@ expresion ::=
         :}   
         
         | expresion:exp1 TMENOR:tmenor expresion:exp2 {: 
+        	//Comprobaciones semánticas y código intermedio:
             ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -877,6 +893,7 @@ expresion ::=
         :}
            
         | expresion:exp1 TDISTINTO:tdistinto expresion:exp2 {: 
+        	//Comprobaciones semánticas y código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -895,6 +912,7 @@ expresion ::=
         :}
         
         | TLINT:entero {: 
+        	//Comprobaciones semánticas y código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -908,6 +926,7 @@ expresion ::=
         :}
         
         | TLTRUE {: 
+        	//Comprobaciones semánticas y código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -920,6 +939,7 @@ expresion ::=
         :}
         
         | TLFALSE {: 
+        	//Comprobaciones semánticas y código intermedio:
         	ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
@@ -932,13 +952,14 @@ expresion ::=
         :}
         
         | TIDENTIFICADOR:id {: 
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	String nombreID= id.getLexema().toUpperCase();
         	SymbolIF simbolo= operacionSemantica.recuperarSimboloDesdeTablaSimbolos(nombreID, id.getLine());
-        	TypeSimple tipoSimbolo;
+        	TypeSimple tipoSimbolo= null;
+        	TypeFunction tipoFuncion= null;
         	if(simbolo.getType() instanceof TypeFunction){
-        		TypeFunction tipoFuncion=(TypeFunction)simbolo.getType();
+        		tipoFuncion=(TypeFunction)simbolo.getType();
         		tipoSimbolo=tipoFuncion.getTipoFuncion();
         	}else{
         		if (!(simbolo.getType() instanceof TypeSimple))  operacionSemantica.getErrorSemantico().lanzarErrorPorExpresionConTipoNoPermitido(id.getLine());
@@ -954,16 +975,14 @@ expresion ::=
         	if (simbolo instanceof SymbolConstant){
         		int valor= ((SymbolConstant)simbolo).getValor();
         		cb.addQuadruple("MV", temp, valor);
-        	}else if(simbolo instanceof SymbolVariable){
+        	}else if(simbolo instanceof SymbolVariable || simbolo instanceof SymbolParameter){
         		Variable var= new Variable(nombreID,simbolo.getScope());
         		cb.addQuadruple("MVA", temp2, var);
         		cb.addQuadruple("MVP", temp, temp2);
         	}
         	else{
-	        	cb.addQuadruple("DATA_SUB");
-	        	LabelFactoryIF lF= new LabelFactory();
-	        	LabelIF l1=lF.create(nombreID);
-	        	cb.addQuadruple("CALL", l1);
+        		LabelIF l1= tipoFuncion.getLabel();
+	        	cb.addQuadruple("CALL", l1, nombreID);
         	}
         	Expresion expresion= new Expresion(tipoSimbolo);
         	expresion.setTemporal(temp);
@@ -972,7 +991,7 @@ expresion ::=
         :}
         
         | TIDENTIFICADOR:id1 TPUNTO TIDENTIFICADOR:id2 {:         	
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String idTipoRegistro= id1.getLexema().toUpperCase();
         	String idRegCampo= id2.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
@@ -987,15 +1006,11 @@ expresion ::=
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
         	TemporalIF temp= tf.create();
         	TemporalIF temp1= tf.create();
-        	TemporalIF temp2= tf.create();
-        	TemporalIF temp3= tf.create();
         	int posicion= tipoRegistro.getPosicion(regCampo.getNombreVariable());
         	SymbolIF sV= scopeManager.searchSymbol(idTipoRegistro);
         	Variable var= new Variable(idTipoRegistro, sV.getScope());
-        	cb.addQuadruple("MVA", temp1, var);
-        	cb.addQuadruple("MV", temp2, posicion);
-        	cb.addQuadruple("ADD", temp3, temp1, temp2);
-        	cb.addQuadruple("MVP", temp, temp3);
+        	cb.addQuadruple("MVA", temp1, var, posicion);
+        	cb.addQuadruple("MVP", temp, temp1);
         	Expresion expresion= new Expresion(tipoRegCampo);
         	expresion.setTemporal(temp);
         	expresion.setIntermediateCode(cb.create());
@@ -1003,23 +1018,26 @@ expresion ::=
         :}  
                                                     
         | TIDENTIFICADOR:id TPARI sentCallParams:param TPARD:tpard {:
-        	//Comprobaciones semánticas:
+        	//Operaciones y comprobaciones semánticas:
         	String idTipoFuncion=id.getLexema().toUpperCase();
         	OperacionSemantica operacionSemantica= new OperacionSemantica();
         	TypeFunction tipoFuncion= operacionSemantica.recuperarTipoFuncionPorNombre(idTipoFuncion, tpard.getLine());
         	tipoFuncion.comprobarCoincidenciaTiposParametros(param.getPilaTipos(), tpard.getLine());
+        	SymbolProcedure simboloProcedimiento= (SymbolProcedure) operacionSemantica.recuperarSimboloDesdeTablaSimbolos(idTipoFuncion, tpard.getLine());
+        	int numeroParametros=simboloProcedimiento.getSizeParametros();
         	
         	//Código intermedio
         	ScopeIF scope= scopeManager.getCurrentScope();
         	TemporalFactory tf= new TemporalFactory(scope);
+        	TemporalIF temp= tf.create();
         	IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
-        	cb.addQuadruple("DATA_SUB");
         	cb.addQuadruples(param.getIntermediateCode());
-        	LabelFactory lF= new LabelFactory();
-        	LabelIF l1= lF.create(idTipoFuncion);
-        	cb.addQuadruple("CALL", l1);
+			LabelIF l1= tipoFuncion.getLabel();
+        	cb.addQuadruple("CALL", l1, idTipoFuncion);
+        	cb.addQuadruple("RETF", temp , numeroParametros);
         	Expresion expresion= new Expresion(tipoFuncion.getTipoFuncion());
         	expresion.setIntermediateCode(cb.create());
+        	expresion.setTemporal(temp);
         	RESULT= expresion;
         :}                                           
         | error
@@ -1039,11 +1057,13 @@ tipoPrimitivo ::=
 
 varSeqDeIds ::=
         TIDENTIFICADOR:ti {:
+        	//Operaciones y comprobaciones semánticas:
         	VarSeqDeIds varSeqDeIds = new VarSeqDeIds();
         	varSeqDeIds.addNombreVariable(ti.getLexema());
         	RESULT=varSeqDeIds;
         :}
         | TIDENTIFICADOR:ti TCOMA varSeqDeIds:vsqids {:
+        	//Operaciones y comprobaciones semánticas:
         	vsqids.addNombreVariable(ti.getLexema());
         	RESULT=vsqids;
         :}  
@@ -1051,10 +1071,12 @@ varSeqDeIds ::=
 
 cuerpoModulo ::= 
         ctes tipos vars subs:subs TBEGIN finalModulo:fModulo {:
+        	//Operaciones y comprobaciones semánticas:
         	String nombreAmbito= scopeManager.getCurrentScope().getName();
+        	TypeProcedure tipoProcedimiento=null;
         	if(scopeManager.getCurrentScope().getLevel()!=0){
         		OperacionSemantica operacionSemantica= new OperacionSemantica();
-        		TypeProcedure tipoProcedimiento=operacionSemantica.recuperarTipoProcedimientoPorNombre(nombreAmbito, fModulo.getNumeroLinea());
+        		tipoProcedimiento=operacionSemantica.recuperarTipoProcedimientoPorNombre(nombreAmbito, fModulo.getNumeroLinea());
         		if (tipoProcedimiento instanceof TypeFunction) {
         			if (!OperacionSemantica.comprobarExisteReturn(fModulo.getSentencias().getPilaSentencias())) operacionSemantica.getErrorSemantico().lanzarErrorPorNoExistirReturn(nombreAmbito);
         		}
@@ -1062,22 +1084,21 @@ cuerpoModulo ::=
 			
 			//Código intermedio:
 			ScopeIF scope= scopeManager.getCurrentScope();
-			LabelFactory lF = new LabelFactory();
-			LabelIF l1 = lF.create(scope.getName());
 			IntermediateCodeBuilder cb= new IntermediateCodeBuilder(scope);
-			String retorno= null;
-			String tamano= null;
-        	if(scopeManager.getCurrentScope().getLevel()!=0){
-				cb.addQuadruple("ETIQUETA", l1, tamano); //Generación etiqueta del procedimiento y el valor del tamaño del R.A.
+        	if(scope.getLevel()!=0){
+        		LabelIF l1= tipoProcedimiento.getLabel();
+				cb.addQuadruple("INL", l1, scope.getLevel(), scope.getName());
 				cb.addQuadruples(fModulo.getSentencias().getIntermediateCode()); //añadir el código intermedio de las diferentes sentencias del subprograma
-				cb.addQuadruple("FIN_SUB", l1, retorno);
+				if (!(tipoProcedimiento instanceof TypeFunction)) cb.addQuadruple("FIN_SUB");
 				scopeManager.closeScope();
 				ErrorSemantico errorSemantico= new ErrorSemantico();
 				errorSemantico.lanzarInfoCierreAmbito(nombreAmbito,fModulo.getNumeroLinea());
 			}else{
-				cb.addQuadruple("ETIQUETA", l1, tamano); //Generación etiqueta del subprograma MAIN y el valor del tamaño del R.A.
-				cb.addQuadruples(fModulo.getSentencias().getIntermediateCode ()); //añadir el código intermedio de las diferentes sentencias del subprograma MAIN
-				cb.addQuadruple("HALT"); //finalizamos la ejecución de la función MAIN y del programa
+				LabelFactory lF= new LabelFactory();
+        		LabelIF l1= lF.create();
+				cb.addQuadruple("INL", l1, scope.getLevel(), scope.getName());
+				cb.addQuadruples(fModulo.getSentencias().getIntermediateCode ());
+				cb.addQuadruple("HALT"); 
 			}
 			fModulo.getSentencias().setIntermediateCode(cb.create());
 			RESULT=new CuerpoModulo(subs, fModulo);
@@ -1088,7 +1109,10 @@ cuerpoModulo ::=
     ;
 
 finalModulo ::= 
-        sentencias:s TEND TIDENTIFICADOR ntPtoComa:pc {: RESULT= new FinalModulo(s,pc); :}
+        sentencias:s TEND TIDENTIFICADOR:id ntPtoComa:pc {: 
+        	String nombreModulo=id.getLexema().toUpperCase();
+        	RESULT= new FinalModulo(s,nombreModulo,pc); 
+        :}
         | error
             
     ;

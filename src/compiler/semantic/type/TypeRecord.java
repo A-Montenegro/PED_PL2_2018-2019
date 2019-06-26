@@ -56,10 +56,15 @@ public class TypeRecord
         return registroCampos.getListaRegCampos().size();
     }
     
+    /**
+     * Devuelve la posición de un campo dentro del registro.
+     * @param nombreRegCampo
+     * @return Posición de un campo dentro del registro.
+     */
     public int getPosicion(String nombreRegCampo)
     {
     	RegCampo regCampo= recuperarRegCampoPorNombre(nombreRegCampo);
-        //A continuación se resta el número total de resgistros al índice del elemento para obtener el índice real (ya que se inesertan en forma de pila)
+        //A continuación se resta el número total de resgistros al índice del elemento para obtener el índice real (ya que se inesertan en forma de pila).
     	return registroCampos.getListaRegCampos().size()-registroCampos.getListaRegCampos().indexOf(regCampo)-1; 
     }
 }
