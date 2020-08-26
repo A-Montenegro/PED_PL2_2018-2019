@@ -26,8 +26,8 @@ import es.uned.lsi.compiler.semantic.type.TypeIF;
 import es.uned.lsi.compiler.semantic.type.TypeTableIF;
 
 /***
- * Clase que se encarga de todas las operaciones que se hacen en el an·lisis sem·ntico.
- * @author Alberto MartÌnez Montenegro
+ * Clase que se encarga de todas las operaciones que se hacen en el an√°lisis sem√°ntico.
+ * @author Alberto Mart√≠nez Montenegro
  */
 public class OperacionSemantica {
 	private ErrorSemantico errorSemantico;
@@ -37,7 +37,7 @@ public class OperacionSemantica {
 	private TypeTableIF tTable;
 	
 	/***
-	 * Constructor de la clase, toma los valores de los ·mbitos y las tablas en el momento de la creaciÛn del objeto.
+	 * Constructor de la clase, toma los valores de los √°mbitos y las tablas en el momento de la creaci√≥n del objeto.
 	 */
 	public OperacionSemantica() {
 		errorSemantico= new ErrorSemantico();
@@ -46,6 +46,7 @@ public class OperacionSemantica {
 		sTable= scope.getSymbolTable();
 		tTable= scope.getTypeTable();
 	}
+	
 	/***
 	 * 
 	 * @return Devuelve la instancia correspondiente de la clase ErrorSemantico.
@@ -55,7 +56,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que aÒade los tipos primitivos a la tabla de tipos para incializarla. SÛlo se invoca al crear el ·mbito global.
+	 * M√©todo que a√±ade los tipos primitivos a la tabla de tipos para incializarla. S√≥lo se invoca al crear el √°mbito global.
 	 */
 	public void inicializarTablaTipos() {
 		TypeTableIF tTable = scope.getTypeTable();
@@ -64,7 +65,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que aÒade la lista de par·metros que se le pasa a la tabla de sÌmbolos.
+	 * M√©todo que a√±ade la lista de par√°metros que se le pasa a la tabla de s√≠mbolos.
 	 * @param listaParametros
 	 * @param numeroLinea
 	 */
@@ -79,7 +80,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que aÒade una secuencia de sÌmbolos(secuencia representada por un objeto de la clase VarSeqDeIds), a la tabla de sÌmbolos.
+	 * M√©todo que a√±ade una secuencia de s√≠mbolos(secuencia representada por un objeto de la clase VarSeqDeIds), a la tabla de s√≠mbolos.
 	 * @param varSeqDeIds
 	 * @param tipoVarSeqDeIds
 	 * @param tipoDeDeclaracion
@@ -94,7 +95,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que aÒade un sÌmbolo a la tabla de sÌmbolos.
+	 * M√©todo que a√±ade un s√≠mbolo a la tabla de s√≠mbolos.
 	 * @param nombreSimbolo
 	 * @param tipoSimbolo
 	 * @param tipoDeDeclaracion
@@ -115,7 +116,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 *  MÈtodo que aÒade un tipo a la tabla de tipos.
+	 *  M√©todo que a√±ade un tipo a la tabla de tipos.
 	 * @param tipoRegistro
 	 * @param numeroLinea
 	 */
@@ -131,7 +132,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que crea el sÌmbolo correspondiente seg˙n los par·metros que se le pasen.
+	 * M√©todo que crea el s√≠mbolo correspondiente seg√∫n los par√°metros que se le pasen.
 	 * @param nombreSimbolo
 	 * @param tipoSimbolo
 	 * @param tipoDeDeclaracion
@@ -153,9 +154,9 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que crea una cadena de texto a partir del n˙mero entero que se le pasa como par·metro.
+	 * M√©todo que crea una cadena de texto a partir del n√∫mero entero que se le pasa como par√°metro.
 	 * @param tipoDeDeclaracion
-	 * @return Cadena de texto correspondiente seg˙n el entero que se le pase como par·metro.
+	 * @return Cadena de texto correspondiente seg√∫n el entero que se le pase como par√°metro.
 	 */
 	public String createCadenaTipoDeDeclaracion(int tipoDeDeclaracion){
 		switch(tipoDeDeclaracion) {
@@ -164,18 +165,18 @@ public class OperacionSemantica {
 		case 1:
 			return "la variable";
 		case 2:
-			return "el par·metro";
+			return "el par√°metro";
 		case 3:
 			return "el procedimiento";
 		default:
-			return "la funciÛn";
+			return "la funci√≥n";
 		}
 	}
 	
 	/***
-	 * MÈtodo que devuelve 'true' si el tipo cuyo nombre se ha pasado como par·metro existe.
+	 * M√©todo que devuelve 'true' si el tipo cuyo nombre se ha pasado como par√°metro existe.
 	 * @param nombreTipo
-	 * @return 'true' si el tipo cuyo nombre se ha pasado como par·metro existe.
+	 * @return 'true' si el tipo cuyo nombre se ha pasado como par√°metro existe.
 	 */
 	public boolean existeTipo(String nombreTipo) {
 		if (scopeManager.searchType(nombreTipo)==null) return false;
@@ -183,7 +184,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que recupera un sÌmbolo de la tabla de sÌmbolos a partir del nombre que se le pasa como par·metro, lanzar· un error sem·ntico fatal si no lo encuentra.
+	 * M√©todo que recupera un s√≠mbolo de la tabla de s√≠mbolos a partir del nombre que se le pasa como par√°metro, lanzar√° un error sem√°ntico fatal si no lo encuentra.
 	 * @param nombreSimbolo
 	 * @param numeroLinea
 	 * @return Instancia de la subclase correspondiente de SymbolIF.
@@ -195,7 +196,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que recupera un tipo de la tabla de tipos a partir del nombre que se le pasa como par·metro, lanzar· un error sem·ntico fatal si no lo encuentra.
+	 * M√©todo que recupera un tipo de la tabla de tipos a partir del nombre que se le pasa como par√°metro, lanzar√° un error sem√°ntico fatal si no lo encuentra.
 	 * @param nombreTipo
 	 * @param numeroLinea
 	 * @return Instancia de la subclase correspondiente de TypeIF.
@@ -207,7 +208,7 @@ public class OperacionSemantica {
 	}	
 	
 	/***
-	 * MÈtodo que recupera un tipo registro de la tabla de tipos a partir del nombre que se le pasa como par·metro, lanzar· un error sem·ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo registro.
+	 * M√©todo que recupera un tipo registro de la tabla de tipos a partir del nombre que se le pasa como par√°metro, lanzar√° un error sem√°ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo registro.
 	 * @param nombreSimbolo
 	 * @param numeroLinea
 	 * @return Instancia correspondiente de TypeRecord.
@@ -226,7 +227,7 @@ public class OperacionSemantica {
 	}	
 	
 	/***
-	 * MÈtodo que recupera un tipo procedimiento de la tabla de tipos a partir del nombre que se le pasa como par·metro, lanzar· un error sem·ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo procedimiento.
+	 * M√©todo que recupera un tipo procedimiento de la tabla de tipos a partir del nombre que se le pasa como par√°metro, lanzar√° un error sem√°ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo procedimiento.
 	 * @param nombreTipoProcedimiento
 	 * @param numeroLinea
 	 * @return Instancia correspondiente de TypeProcedure.
@@ -244,7 +245,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que recupera un tipo funciÛn de la tabla de tipos a partir del nombre que se le pasa como par·metro, lanzar· un error sem·ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo funciÛn.
+	 * M√©todo que recupera un tipo funci√≥n de la tabla de tipos a partir del nombre que se le pasa como par√°metro, lanzar√° un error sem√°ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo funci√≥n.
 	 * @param nombreTipoFuncion
 	 * @param numeroLinea
 	 * @return Instancia correspondiente de TypeFunction.
@@ -262,7 +263,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que recupera un tipo simple de la tabla de tipos a partir del nombre que se le pasa como par·metro, lanzar· un error sem·ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo simple.
+	 * M√©todo que recupera un tipo simple de la tabla de tipos a partir del nombre que se le pasa como par√°metro, lanzar√° un error sem√°ntico fatal si no lo encuentra, o si lo encuentra pero no es de tipo simple.
 	 * @param nombreTipoSimple
 	 * @param numeroLinea
 	 * @return Instancia correspondiente de TypeSimple.
@@ -280,7 +281,7 @@ public class OperacionSemantica {
 	}
 	
 	/**
-	 * MÈtodo que aÒade una serie de parametros (SymbolParameter) a una estructura que forma parte de su procedimiento (SymbolProcedure)
+	 * M√©todo que a√±ade una serie de parametros (SymbolParameter) a una estructura que forma parte de su procedimiento (SymbolProcedure)
 	 * @param parametros
 	 */
 	public void addSimbolosParametrosASimboloProcedimiento(VarsLista parametros) {
@@ -296,7 +297,7 @@ public class OperacionSemantica {
 	}
 	
 	/***
-	 * MÈtodo que lanza un error sem·ntico fatal si la sentencia 'RETURN' devuelve un tipo diferente al de su funciÛn.
+	 * M√©todo que lanza un error sem√°ntico fatal si la sentencia 'RETURN' devuelve un tipo diferente al de su funci√≥n.
 	 * @param tipoReturn
 	 * @param numeroLinea
 	 */
@@ -309,7 +310,7 @@ public class OperacionSemantica {
 	}
 	
 	/**
-	 * MÈtodo que devuelve TRUE si existe un procedimiento con el nombre que se le pasa como par·metro y FALSE en caso contrario.
+	 * M√©todo que devuelve TRUE si existe un procedimiento con el nombre que se le pasa como par√°metro y FALSE en caso contrario.
 	 * @param nombreProcedimiento
 	 * @return
 	 */
@@ -321,7 +322,7 @@ public class OperacionSemantica {
 	
 	
 	/***
-	 * MÈtodo est·tico que dada una pila de sentencias comprueba si alguna es una sentencia 'RETURN' garantizada (que no estÈ sujeta a condiciÛn).
+	 * M√©todo est√°tico que dada una pila de sentencias comprueba si alguna es una sentencia 'RETURN' garantizada (que no est√© sujeta a condici√≥n).
 	 * @param sentencias
 	 * @return 'true' si hay sentencia 'RETURN' garantizada
 	 */
