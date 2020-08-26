@@ -46,7 +46,6 @@ public class OperacionSemantica {
 		sTable= scope.getSymbolTable();
 		tTable= scope.getTypeTable();
 	}
-	
 	/***
 	 * 
 	 * @return Devuelve la instancia correspondiente de la clase ErrorSemantico.
